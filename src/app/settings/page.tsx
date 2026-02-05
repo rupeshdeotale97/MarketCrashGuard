@@ -140,7 +140,7 @@ export default function SettingsPage() {
                   setIsSupporter(false);
                 }}
               >
-                Reset Supporter Status (Test)
+                Reset Supporter Status
               </Button>
             </div>
           ) : (
