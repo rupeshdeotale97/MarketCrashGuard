@@ -10,7 +10,10 @@ import {
   Globe,
   Flag,
   Coins,
-  ShieldCheck
+  ShieldCheck,
+  Mountain,
+  Flame,
+  Droplets
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
@@ -21,8 +24,8 @@ interface IndexData {
   region?: string;
   price: string;
   change: number;
-  type: 'global' | 'india' | 'crypto';
-  signal: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  type: 'global' | 'india' | 'crypto' | 'commodity';
+  signal: 'BULLISH' | 'BEARISH' | 'NEUTRAL' | 'CRASH';
 }
 
 export default function LiveSignalsPage() {
@@ -41,21 +44,27 @@ export default function LiveSignalsPage() {
         // US Markets
         { name: 'S&P 500', region: 'US', price: '5,021.40', change: -0.45 + (Math.random() * 0.2), type: 'global', signal: 'NEUTRAL' },
         { name: 'NASDAQ 100', region: 'US', price: '17,890.10', change: -0.85 + (Math.random() * 0.4), type: 'global', signal: 'BEARISH' },
-        { name: 'Dow Jones', region: 'US', price: '38,272.75', change: -0.12 + (Math.random() * 0.1), type: 'global', signal: 'NEUTRAL' },
         
         // European Markets
         { name: 'FTSE 100', region: 'Europe', price: '7,624.10', change: 0.15 + (Math.random() * 0.2), type: 'global', signal: 'NEUTRAL' },
         { name: 'DAX 40', region: 'Europe', price: '16,921.30', change: -0.55 + (Math.random() * 0.3), type: 'global', signal: 'BEARISH' },
-        { name: 'CAC 40', region: 'Europe', price: '7,592.20', change: -0.22 + (Math.random() * 0.2), type: 'global', signal: 'NEUTRAL' },
 
         // Asian Markets
         { name: 'Nikkei 225', region: 'Asia', price: '36,158.00', change: 1.12 + (Math.random() * 0.5), type: 'global', signal: 'BULLISH' },
-        { name: 'Hang Seng', region: 'Asia', price: '15,878.00', change: -2.34 + (Math.random() * 0.8), type: 'global', signal: 'CRASH' as any },
-        { name: 'Shanghai Comp', region: 'Asia', price: '2,829.70', change: -0.82 + (Math.random() * 0.4), type: 'global', signal: 'BEARISH' },
+        { name: 'Hang Seng', region: 'Asia', price: '15,878.00', change: -2.34 + (Math.random() * 0.8), type: 'global', signal: 'CRASH' },
 
         // Indian Markets
         { name: 'NIFTY 50', region: 'India', price: '22,450.25', change: 0.32 + (Math.random() * 0.1), type: 'india', signal: 'BULLISH' },
         { name: 'SENSEX', region: 'India', price: '73,890.15', change: 0.28 + (Math.random() * 0.1), type: 'india', signal: 'BULLISH' },
+      ];
+
+      const mockCommodities: IndexData[] = [
+        { name: 'Gold', region: 'XAU/USD', price: '$2,342.10', change: 1.2 + (Math.random() * 0.5), type: 'commodity', signal: 'BULLISH' },
+        { name: 'Silver', region: 'XAG/USD', price: '$28.45', change: 0.8 + (Math.random() * 0.3), type: 'commodity', signal: 'BULLISH' },
+        { name: 'Brent Oil', region: 'ICE', price: '$82.15', change: -1.4 + (Math.random() * 0.4), type: 'commodity', signal: 'BEARISH' },
+        { name: 'Natural Gas', region: 'NYMEX', price: '$2.15', change: -3.2 + (Math.random() * 1.2), type: 'commodity', signal: 'CRASH' },
+        { name: 'Copper', region: 'COMEX', price: '$4.52', change: -0.2 + (Math.random() * 0.1), type: 'commodity', signal: 'NEUTRAL' },
+        { name: 'Platinum', region: 'NYMEX', price: '$945.00', change: 0.4 + (Math.random() * 0.2), type: 'commodity', signal: 'NEUTRAL' },
       ];
 
       try {
@@ -85,12 +94,16 @@ export default function LiveSignalsPage() {
         ];
       }
 
-      const finalData = [...mockGlobal, ...cryptoData].map(item => {
-        let signal: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = 'NEUTRAL';
-        if (item.change > 0.5) signal = 'BULLISH';
-        if (item.change < -0.5) signal = 'BEARISH';
+      const finalData = [...mockGlobal, ...mockCommodities, ...cryptoData].map(item => {
+        let signal = item.signal;
+        if (item.type === 'crypto') {
+          if (item.change > 2) signal = 'BULLISH';
+          else if (item.change < -4) signal = 'CRASH';
+          else if (item.change < -1) signal = 'BEARISH';
+          else signal = 'NEUTRAL';
+        }
         return { ...item, signal };
-      });
+      }) as IndexData[];
 
       if (mounted) {
         setData(finalData);
@@ -112,7 +125,9 @@ export default function LiveSignalsPage() {
       case 'BULLISH':
         return <Badge className="bg-risk-low/20 text-risk-low border-risk-low/30 hover:bg-risk-low/20">BULLISH</Badge>;
       case 'BEARISH':
-        return <Badge className="bg-risk-crash/20 text-risk-crash border-risk-crash/30 hover:bg-risk-crash/20">BEARISH</Badge>;
+        return <Badge className="bg-risk-crash/10 text-risk-crash border-risk-crash/30 hover:bg-risk-crash/10">BEARISH</Badge>;
+      case 'CRASH':
+        return <Badge className="bg-risk-crash text-white border-transparent animate-pulse">CRASH</Badge>;
       default:
         return <Badge variant="outline" className="text-muted-foreground border-white/10">NEUTRAL</Badge>;
     }
@@ -169,10 +184,11 @@ export default function LiveSignalsPage() {
       </div>
 
       {/* Index Lists */}
-      <div className="space-y-8">
+      <div className="space-y-10">
         {[
           { title: 'Global Indices', type: 'global', icon: <Globe className="w-4 h-4 text-blue-500" /> },
           { title: 'India Domestic', type: 'india', icon: <Flag className="w-4 h-4 text-orange-500" /> },
+          { title: 'Commodity Benchmarks', type: 'commodity', icon: <Mountain className="w-4 h-4 text-yellow-600" /> },
           { title: 'Crypto Velocity', type: 'crypto', icon: <Coins className="w-4 h-4 text-secondary" /> },
         ].map((section) => (
           <div key={section.type} className="space-y-4">
@@ -225,8 +241,8 @@ export default function LiveSignalsPage() {
               <p className="text-xs font-bold text-white">Signal Status: {getSentimentScore() > 50 ? 'Constructive' : 'Defensive'}</p>
               <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
                 {getSentimentScore() > 50 
-                  ? "Market participation is broadening across Asia and Europe. Look for US session confirmation."
-                  : "Global correlation is tightening towards the downside. Liquidity preservation is priority #1."}
+                  ? "Commodities like Gold showing strength alongside stable indices suggest a healthy inflationary expansion. Market participation is broadening."
+                  : "Safe havens are outperforming risk assets. Global correlation is tightening towards the downside. Liquidity preservation is priority #1."}
               </p>
             </div>
           </div>
