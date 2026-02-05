@@ -7,25 +7,14 @@ import {
   Activity, 
   Zap, 
   Loader2, 
-  ArrowUpRight, 
-  ArrowDownRight,
   Globe,
   Flag,
   Coins,
-  ShieldCheck,
-  AlertCircle,
-  BarChart3
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 interface IndexData {
   name: string;
@@ -45,47 +34,59 @@ export default function LiveSignalsPage() {
 
     async function fetchLiveIntelligence() {
       if (!mounted) return;
+      
+      let cryptoData: IndexData[] = [];
+      const mockGlobal: IndexData[] = [
+        { name: 'S&P 500', price: '5,021.40', change: -0.45 + (Math.random() * 0.2), type: 'global', signal: 'NEUTRAL' },
+        { name: 'NASDAQ 100', price: '17,890.10', change: -0.85 + (Math.random() * 0.4), type: 'global', signal: 'BEARISH' },
+        { name: 'NIFTY 50', price: '22,450.25', change: 0.32 + (Math.random() * 0.1), type: 'india', signal: 'BULLISH' },
+        { name: 'SENSEX', price: '73,890.15', change: 0.28 + (Math.random() * 0.1), type: 'india', signal: 'BULLISH' },
+      ];
+
       try {
-        // Fetch real crypto data
-        const cryptoResponse = await fetch('https://api.coincap.io/v2/assets?limit=5');
-        const cryptoJson = await cryptoResponse.json();
-
-        // Simulate global indices based on crypto volatility (often correlated in risk regimes)
-        const mockGlobal: IndexData[] = [
-          { name: 'S&P 500', price: '5,021.40', change: -0.45 + (Math.random() * 0.2), type: 'global', signal: 'NEUTRAL' },
-          { name: 'NASDAQ 100', price: '17,890.10', change: -0.85 + (Math.random() * 0.4), type: 'global', signal: 'BEARISH' },
-          { name: 'NIFTY 50', price: '22,450.25', change: 0.32 + (Math.random() * 0.1), type: 'india', signal: 'BULLISH' },
-          { name: 'SENSEX', price: '73,890.15', change: 0.28 + (Math.random() * 0.1), type: 'india', signal: 'BULLISH' },
-        ];
-
-        const cryptoData: IndexData[] = cryptoJson.data.map((item: any) => ({
-          name: item.symbol,
-          price: `$${parseFloat(item.priceUsd).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
-          change: parseFloat(item.changePercent24Hr),
-          type: 'crypto',
-          signal: parseFloat(item.changePercent24Hr) > 1 ? 'BULLISH' : parseFloat(item.changePercent24Hr) < -1 ? 'BEARISH' : 'NEUTRAL'
-        }));
-
-        const finalData = [...mockGlobal, ...cryptoData].map(item => {
-          // Adjust signal based on final change
-          let signal: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = 'NEUTRAL';
-          if (item.change > 0.5) signal = 'BULLISH';
-          if (item.change < -0.5) signal = 'BEARISH';
-          return { ...item, signal };
+        const cryptoResponse = await fetch('https://api.coincap.io/v2/assets?limit=5', {
+          signal: AbortSignal.timeout(5000)
         });
-
-        if (mounted) {
-          setData(finalData);
-          setLastUpdated(new Date().toLocaleTimeString());
-          setLoading(false);
+        
+        if (cryptoResponse.ok) {
+          const cryptoJson = await cryptoResponse.json();
+          cryptoData = cryptoJson.data.map((item: any) => ({
+            name: item.symbol,
+            price: `$${parseFloat(item.priceUsd).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+            change: parseFloat(item.changePercent24Hr),
+            type: 'crypto',
+            signal: 'NEUTRAL'
+          }));
+        } else {
+          throw new Error("API Response Error");
         }
       } catch (error) {
-        console.error("Live fetch failed", error);
+        // Fallback to mock crypto data if fetch fails
+        cryptoData = [
+          { name: 'BTC', price: '$64,250.00', change: -1.2, type: 'crypto', signal: 'BEARISH' },
+          { name: 'ETH', price: '$3,450.20', change: -0.8, type: 'crypto', signal: 'NEUTRAL' },
+          { name: 'SOL', price: '$145.50', change: 2.4, type: 'crypto', signal: 'BULLISH' },
+          { name: 'BNB', price: '$580.10', change: -0.3, type: 'crypto', signal: 'NEUTRAL' },
+          { name: 'XRP', price: '$0.58', change: 1.1, type: 'crypto', signal: 'BULLISH' },
+        ];
+      }
+
+      const finalData = [...mockGlobal, ...cryptoData].map(item => {
+        let signal: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = 'NEUTRAL';
+        if (item.change > 0.5) signal = 'BULLISH';
+        if (item.change < -0.5) signal = 'BEARISH';
+        return { ...item, signal };
+      });
+
+      if (mounted) {
+        setData(finalData);
+        setLastUpdated(new Date().toLocaleTimeString());
+        setLoading(false);
       }
     }
 
     fetchLiveIntelligence();
-    const interval = setInterval(fetchLiveIntelligence, 10000); // Update every 10s
+    const interval = setInterval(fetchLiveIntelligence, 10000);
     return () => {
       mounted = false;
       clearInterval(interval);
@@ -189,7 +190,6 @@ export default function LiveSignalsPage() {
         ))}
       </div>
 
-      {/* Actionable Signal Summary */}
       <div className="bg-secondary/10 border border-secondary/20 rounded-[2rem] p-6 space-y-4">
         <div className="flex items-center gap-3">
           <Zap className="w-5 h-5 text-secondary" />

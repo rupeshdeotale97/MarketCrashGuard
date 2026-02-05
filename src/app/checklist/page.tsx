@@ -8,33 +8,20 @@ import {
   AlertTriangle, 
   ShieldCheck, 
   Loader2, 
-  Activity, 
   Zap, 
   Globe,
-  TrendingDown,
   Flag,
-  LineChart,
   TrendingUp,
   Coins,
   Mountain,
-  Banknote,
-  Droplets,
-  Flame,
-  Scale
+  Banknote
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { 
   BarChart, 
   Bar, 
   XAxis, 
-  YAxis, 
   CartesianGrid, 
   Tooltip, 
   ReferenceLine
@@ -55,15 +42,6 @@ export default function ChecklistPage() {
     { name: 'ADA', change: -0.4, fill: 'hsl(var(--risk-crash))' },
   ]);
   
-  const [globalIndicesData, setGlobalIndicesData] = useState<any[]>([
-    { name: 'S&P500', change: -0.85, fill: 'hsl(var(--risk-crash))' },
-    { name: 'NIFTY', change: 1.2, fill: 'hsl(var(--risk-low))' },
-    { name: 'NASDAQ', change: -1.4, fill: 'hsl(var(--risk-crash))' },
-    { name: 'NIKKEI', change: -2.1, fill: 'hsl(var(--risk-crash))' },
-    { name: 'FTSE', change: 0.15, fill: 'hsl(var(--risk-low))' },
-    { name: 'DAX', change: -0.9, fill: 'hsl(var(--risk-crash))' },
-  ]);
-
   const [liveMetrics, setLiveMetrics] = useState<{
     btcChange: number;
     ethChange: number;
@@ -110,32 +88,16 @@ export default function ChecklistPage() {
             const ethChange = parseFloat(eth?.changePercent24Hr || '0');
             const volume24h = parseFloat(btc?.volumeUsd24Hr || '0') / 1e9;
 
-            const gData = [
-              { name: 'S&P500', change: -0.85 + (Math.random() * 0.4), fill: '' },
-              { name: 'NIFTY', change: 1.2 + (Math.random() * 0.5), fill: '' },
-              { name: 'NASDAQ', change: -1.4 + (Math.random() * 0.3), fill: '' },
-              { name: 'NIKKEI', change: -2.1 + (Math.random() * 0.2), fill: '' },
-              { name: 'FTSE', change: 0.15 + (Math.random() * 0.1), fill: '' },
-              { name: 'DAX', change: -0.9 + (Math.random() * 0.4), fill: '' },
-            ].map(item => ({
-              ...item,
-              fill: item.change < 0 ? 'hsl(var(--risk-crash))' : 'hsl(var(--risk-low))'
-            }));
-            setGlobalIndicesData(gData);
-
-            setLiveMetrics({
+            setLiveMetrics(prev => ({
+              ...prev,
               btcChange,
               ethChange,
               volume24h,
-              spxChange: gData[0].change,
-              niftyChange: gData[1].change,
-              indiaSentiment: 50 + (gData[1].change * 5) + (btcChange * 0.5), 
-              globalSentiment: 45 + (gData[0].change * 10) + (btcChange * 1.5),
-            });
+            }));
           }
         }
       } catch (error) {
-        // Silent fail
+        // Silent fail - keeping existing mock data
       } finally {
         if (mounted) setFetching(false);
       }
@@ -150,7 +112,7 @@ export default function ChecklistPage() {
     };
   }, []);
 
-  const volatilitySpike = Math.abs(liveMetrics.btcChange) > 4 || Math.abs(liveMetrics.ethChange) > 5 || Math.abs(liveMetrics.spxChange) > 2;
+  const volatilitySpike = Math.abs(liveMetrics.btcChange) > 4 || Math.abs(liveMetrics.ethChange) > 5;
   const liquidityShock = liveMetrics.volume24h < 15;
   const crashConfirmed = baseData.factors.creditStress || volatilitySpike || liquidityShock || baseData.factors.externalShock;
 
@@ -242,7 +204,6 @@ export default function ChecklistPage() {
         </div>
       </header>
 
-      {/* Confirmation Status */}
       <div className={cn(
         "rounded-[2rem] p-8 flex flex-col items-center justify-center gap-4 text-center border transition-all duration-700",
         crashConfirmed 
@@ -268,7 +229,6 @@ export default function ChecklistPage() {
         </div>
       </div>
 
-      {/* Crypto Volatility Chart */}
       <div className="bg-card rounded-3xl border border-border p-6 space-y-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -296,13 +256,7 @@ export default function ChecklistPage() {
         </div>
       </div>
 
-      {/* Grouped Checklist */}
       <div className="space-y-6">
-        <div className="flex items-center gap-2 px-1">
-          <TrendingUp className="w-4 h-4 text-muted-foreground" />
-          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Conditions Evaluated</h3>
-        </div>
-
         {groupedChecklist.map((group, groupIdx) => (
           <div key={groupIdx} className="bg-card rounded-[2rem] border border-border overflow-hidden shadow-xl">
             <div className="px-6 py-4 bg-muted/20 border-b border-border flex justify-between items-center">
@@ -341,7 +295,6 @@ export default function ChecklistPage() {
         ))}
       </div>
 
-      {/* Suggested Actions */}
       <div className="flex flex-col gap-3 mt-4">
         <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Suggested Guidance</h3>
         <div className="space-y-2">
