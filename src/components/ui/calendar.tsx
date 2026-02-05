@@ -68,25 +68,19 @@ function Calendar({
         Dropdown: (
           props: DropdownProps 
         ) => {
-          const [selectedValue, setSelectedValue] = React.useState<string>(String(props.value));
-
           const handleValueChange = (newValue: string) => {
-            const newDate = new Date();
             if (props.name === "months") {
-              newDate.setMonth(parseInt(newValue, 10));
-              const month = props.options.find(option => String(option.props.value) === newValue);
-              month && props.onChange && props.onChange(month.props.value as unknown as React.ChangeEvent<HTMLSelectElement>);
+              const month = props.options?.find(option => String(option.props.value) === newValue);
+              if(month) props.onChange?.(month.props.value as unknown as React.ChangeEvent<HTMLSelectElement>);
             } else if (props.name === "years") {
-              newDate.setFullYear(parseInt(newValue, 10));
-              const year = props.options.find(option => String(option.props.value) === newValue);
-              year && props.onChange && props.onChange(year.props.value as unknown as React.ChangeEvent<HTMLSelectElement>)
+              const year = props.options?.find(option => String(option.props.value) === newValue);
+              if(year) props.onChange?.(year.props.value as unknown as React.ChangeEvent<HTMLSelectElement>)
             }
-            setSelectedValue(newValue);
           };
 
           return (
             <Select
-              value={selectedValue}
+              value={String(props.value)}
               onValueChange={handleValueChange}
             >
               <SelectTrigger className={cn(buttonVariants({ variant: "ghost" }), "h-auto font-semibold")}>
