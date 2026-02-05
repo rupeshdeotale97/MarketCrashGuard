@@ -1,22 +1,36 @@
+
 "use client";
 
 import { useState } from 'react';
 import { 
   Calendar, 
   History, 
-  Info, 
   AlertCircle, 
-  CheckCircle2, 
   Clock, 
-  Zap, 
   ShieldAlert, 
   TrendingDown,
-  ChevronRight,
-  Target
+  Target,
+  Zap,
+  LineChart,
+  ArrowRight,
+  TrendingUp,
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  ReferenceLine
+} from 'recharts';
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 const historicalIntelligence = {
   '2008': {
@@ -90,136 +104,262 @@ const historicalIntelligence = {
   }
 };
 
+const bennerCycleData = [
+  { year: 1999, level: 100, type: 'Panic', event: 'Dot-com Peak' },
+  { year: 2003, level: 20, type: 'Hard Times', event: 'Post-Bubble Bottom' },
+  { year: 2007, level: 80, type: 'High Prices', event: 'GFC Peak' },
+  { year: 2011, level: 50, type: 'Stable', event: 'Eurozone Crisis' },
+  { year: 2016, level: 100, type: 'Panic', event: 'China Growth Slowdown' },
+  { year: 2021, level: 20, type: 'Hard Times', event: 'Post-COVID Stimulus' },
+  { year: 2026, level: 80, type: 'High Prices', event: 'Future Projection' },
+  { year: 2035, level: 100, type: 'Panic', event: 'Future Cycle' },
+];
+
 export default function HistoryPage() {
+  const [view, setView] = useState<'replay' | 'benner'>('replay');
   const [activeYear, setActiveYear] = useState<'2008' | '2020' | '2022'>('2008');
   const history = historicalIntelligence[activeYear];
+
+  const chartConfig = {
+    level: {
+      label: "Cycle Intensity",
+      color: "hsl(var(--secondary))",
+    },
+  };
 
   return (
     <div className="flex flex-col gap-6 px-5 pt-8 pb-12">
       <header className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="bg-secondary/20 text-secondary text-[10px] font-bold uppercase tracking-widest">
-            Intelligence Replay
+            Premium Intelligence
           </Badge>
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1">Historical Replay</h1>
-        <p className="text-sm text-muted-foreground font-medium">Study past systemic collapses to build immunity.</p>
+        <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1">Intelligence Replay</h1>
+        <p className="text-sm text-muted-foreground font-medium">Study past systemic collapses and cyclical disorder.</p>
       </header>
 
-      <Tabs defaultValue="2008" className="w-full" onValueChange={(v) => setActiveYear(v as any)}>
-        <TabsList className="grid w-full grid-cols-3 bg-muted/20 p-1 h-12 rounded-2xl">
-          <TabsTrigger value="2008" className="rounded-xl font-bold text-xs">2008 GFC</TabsTrigger>
-          <TabsTrigger value="2020" className="rounded-xl font-bold text-xs">2020 COVID</TabsTrigger>
-          <TabsTrigger value="2022" className="rounded-xl font-bold text-xs">2022 CRYPTO</TabsTrigger>
-        </TabsList>
+      <div className="flex bg-muted/20 p-1 rounded-2xl border border-border">
+        <button 
+          onClick={() => setView('replay')}
+          className={cn(
+            "flex-1 py-2 text-xs font-bold rounded-xl transition-all",
+            view === 'replay' ? "bg-secondary text-white shadow-lg" : "text-muted-foreground hover:text-white"
+          )}
+        >
+          Event Replay
+        </button>
+        <button 
+          onClick={() => setView('benner')}
+          className={cn(
+            "flex-1 py-2 text-xs font-bold rounded-xl transition-all",
+            view === 'benner' ? "bg-secondary text-white shadow-lg" : "text-muted-foreground hover:text-white"
+          )}
+        >
+          Benner Cycle
+        </button>
+      </div>
 
-        <div className="mt-6 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          {/* Executive Summary Card */}
-          <div className="bg-card rounded-[2.5rem] p-8 border border-border shadow-2xl relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-6 opacity-5">
-               <History className="w-32 h-32" />
-             </div>
-             
-             <div className="relative space-y-6">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-black uppercase text-secondary tracking-widest">{history.status}</span>
-                  <h2 className="text-2xl font-black text-white">{history.title}</h2>
-                  <p className="text-xs text-muted-foreground font-semibold flex items-center gap-2">
-                    <Calendar className="w-3 h-3" />
-                    System Failure Point: {history.date}
-                  </p>
+      {view === 'replay' ? (
+        <div className="space-y-6">
+          <Tabs defaultValue="2008" className="w-full" onValueChange={(v) => setActiveYear(v as any)}>
+            <TabsList className="grid w-full grid-cols-3 bg-muted/20 p-1 h-12 rounded-2xl">
+              <TabsTrigger value="2008" className="rounded-xl font-bold text-xs">2008 GFC</TabsTrigger>
+              <TabsTrigger value="2020" className="rounded-xl font-bold text-xs">2020 COVID</TabsTrigger>
+              <TabsTrigger value="2022" className="rounded-xl font-bold text-xs">2022 CRYPTO</TabsTrigger>
+            </TabsList>
+
+            <div className="mt-6 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="bg-card rounded-[2.5rem] p-8 border border-border shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 opacity-5">
+                  <History className="w-32 h-32" />
                 </div>
+                
+                <div className="relative space-y-6">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-black uppercase text-secondary tracking-widest">{history.status}</span>
+                      <h2 className="text-2xl font-black text-white">{history.title}</h2>
+                      <p className="text-xs text-muted-foreground font-semibold flex items-center gap-2">
+                        <Calendar className="w-3 h-3" />
+                        System Failure Point: {history.date}
+                      </p>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(history.stats).map(([label, val]) => (
-                    <div key={label} className="bg-muted/10 p-4 rounded-2xl border border-border/40">
-                      <p className="text-[9px] font-black uppercase text-muted-foreground/60 tracking-wider mb-1">{label.replace(/([A-Z])/g, ' $1')}</p>
-                      <p className="text-sm font-black text-white">{val}</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      {Object.entries(history.stats).map(([label, val]) => (
+                        <div key={label} className="bg-muted/10 p-4 rounded-2xl border border-border/40">
+                          <p className="text-[9px] font-black uppercase text-muted-foreground/60 tracking-wider mb-1">{label.replace(/([A-Z])/g, ' $1')}</p>
+                          <p className="text-sm font-black text-white">{val}</p>
+                        </div>
+                      ))}
+                    </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 px-2">
+                  <Clock className="w-4 h-4 text-secondary" />
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Crisis Progression Timeline</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  {history.timeline.map((item, i) => (
+                    <div key={i} className="flex gap-4 group">
+                      <div className="flex flex-col items-center">
+                        <div className={cn(
+                          "w-3 h-3 rounded-full shrink-0 border-2 mt-1.5",
+                          item.impact === 'CRASH CONFIRMED' ? "bg-risk-crash border-risk-crash animate-pulse" : "bg-muted border-border"
+                        )} />
+                        {i !== history.timeline.length - 1 && <div className="w-px h-full bg-border mt-1" />}
+                      </div>
+                      <div className="flex flex-col pb-4">
+                        <span className="text-[10px] font-bold text-muted-foreground">{item.date}</span>
+                        <span className="text-sm font-bold text-white group-hover:text-secondary transition-colors">{item.event}</span>
+                        <Badge variant="outline" className={cn(
+                          "w-fit mt-1 text-[8px] font-black h-4 px-1.5",
+                          item.impact === 'CRASH CONFIRMED' ? "border-risk-crash/40 text-risk-crash" : "border-white/10 text-muted-foreground/60"
+                        )}>
+                          {item.impact}
+                        </Badge>
+                      </div>
                     </div>
                   ))}
                 </div>
-             </div>
+              </div>
+
+              <div className="bg-muted/10 rounded-[2rem] p-6 border border-border space-y-5">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-secondary" />
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-white">Systemic Stress Map</h3>
+                </div>
+                <div className="space-y-4">
+                  {history.factors.map((factor, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex justify-between items-end">
+                        <span className="text-xs font-bold text-white">{factor.name}</span>
+                        <span className={cn(
+                          "text-[9px] font-black px-1.5 rounded",
+                          factor.level === 'CRITICAL' || factor.level === 'EXTREME' ? "bg-risk-crash/20 text-risk-crash" : "bg-secondary/20 text-secondary"
+                        )}>
+                          {factor.level}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className={cn(
+                            "h-full transition-all duration-1000",
+                            factor.level === 'CRITICAL' || factor.level === 'EXTREME' ? "bg-risk-crash" : "bg-secondary"
+                          )} 
+                          style={{ width: factor.level === 'CRITICAL' || factor.level === 'EXTREME' ? '100%' : '60%' }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground font-medium italic">{factor.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Tabs>
+        </div>
+      ) : (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="bg-card rounded-[2.5rem] p-8 border border-border shadow-2xl relative">
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase text-secondary tracking-widest">Est. 1875 Analysis</span>
+                <h2 className="text-2xl font-black text-white">Samuel Benner Cycle</h2>
+                <p className="text-xs text-muted-foreground leading-relaxed font-medium italic">
+                  "History repeats itself in rhythmic cycles of panic and prosperity."
+                </p>
+              </div>
+
+              <div className="h-64 w-full mt-4">
+                <ChartContainer config={chartConfig} className="h-full w-full">
+                  <AreaChart data={bennerCycleData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorLevel" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--secondary))" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="hsl(var(--secondary))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="year" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fontSize: 10, fill: 'hsl(var(--muted-foreground))'}} 
+                    />
+                    <YAxis hide />
+                    <Tooltip content={<ChartTooltipContent hideLabel />} />
+                    <Area 
+                      type="monotone" 
+                      dataKey="level" 
+                      stroke="hsl(var(--secondary))" 
+                      fillOpacity={1} 
+                      fill="url(#colorLevel)" 
+                    />
+                    <ReferenceLine y={80} stroke="hsl(var(--risk-high))" strokeDasharray="3 3" />
+                    <ReferenceLine y={100} stroke="hsl(var(--risk-crash))" strokeDasharray="3 3" />
+                  </AreaChart>
+                </ChartContainer>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                <div className="text-center p-3 bg-muted/10 rounded-2xl border border-border/40">
+                  <Zap className="w-4 h-4 mx-auto mb-1 text-risk-crash" />
+                  <p className="text-[8px] font-black uppercase text-muted-foreground">Panics</p>
+                  <p className="text-[10px] font-bold text-white">Peak Cycles</p>
+                </div>
+                <div className="text-center p-3 bg-muted/10 rounded-2xl border border-border/40">
+                  <TrendingUp className="w-4 h-4 mx-auto mb-1 text-secondary" />
+                  <p className="text-[8px] font-black uppercase text-muted-foreground">Highs</p>
+                  <p className="text-[10px] font-bold text-white">Sell Signal</p>
+                </div>
+                <div className="text-center p-3 bg-muted/10 rounded-2xl border border-border/40">
+                  <TrendingDown className="w-4 h-4 mx-auto mb-1 text-risk-low" />
+                  <p className="text-[8px] font-black uppercase text-muted-foreground">Lows</p>
+                  <p className="text-[10px] font-bold text-white">Buy Signal</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Timeline Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 px-2">
-              <Clock className="w-4 h-4 text-secondary" />
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Crisis Progression Timeline</h3>
+              <BarChart3 className="w-4 h-4 text-secondary" />
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Cycle Correlations</h3>
             </div>
             
             <div className="space-y-3">
-              {history.timeline.map((item, i) => (
-                <div key={i} className="flex gap-4 group">
-                  <div className="flex flex-col items-center">
-                    <div className={cn(
-                      "w-3 h-3 rounded-full shrink-0 border-2 mt-1.5",
-                      item.impact === 'CRASH CONFIRMED' ? "bg-risk-crash border-risk-crash animate-pulse" : "bg-muted border-border"
-                    )} />
-                    {i !== history.timeline.length - 1 && <div className="w-px h-full bg-border mt-1" />}
+              {[
+                { year: "2007-2008", cycle: "High to Panic", result: "Cycle completed with GFC collapse.", color: "text-risk-crash" },
+                { year: "2016-2017", cycle: "Panic Phase", result: "Oil & Emerging Market volatility spike.", color: "text-risk-elevated" },
+                { year: "2021-2022", cycle: "Hard Times", result: "Post-stimulus deleveraging cycle.", color: "text-risk-high" },
+                { year: "2024-2025", cycle: "Accumulation", result: "Benner prediction: Transition to high.", color: "text-risk-low" }
+              ].map((cor, i) => (
+                <div key={i} className="bg-card border border-border rounded-2xl p-4 flex justify-between items-center group hover:border-secondary/30 transition-all">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] font-black text-secondary uppercase">{cor.year}</span>
+                    <span className="text-sm font-bold text-white">{cor.cycle}</span>
+                    <p className="text-[10px] text-muted-foreground font-medium">{cor.result}</p>
                   </div>
-                  <div className="flex flex-col pb-4">
-                    <span className="text-[10px] font-bold text-muted-foreground">{item.date}</span>
-                    <span className="text-sm font-bold text-white group-hover:text-secondary transition-colors">{item.event}</span>
-                    <Badge variant="outline" className={cn(
-                      "w-fit mt-1 text-[8px] font-black h-4 px-1.5",
-                      item.impact === 'CRASH CONFIRMED' ? "border-risk-crash/40 text-risk-crash" : "border-white/10 text-muted-foreground/60"
-                    )}>
-                      {item.impact}
-                    </Badge>
-                  </div>
+                  <ArrowRight className={cn("w-4 h-4 shrink-0", cor.color)} />
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Stress Factor Map */}
-          <div className="bg-muted/10 rounded-[2rem] p-6 border border-border space-y-5">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-secondary" />
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-white">Systemic Stress Map</h3>
-            </div>
-            <div className="space-y-4">
-              {history.factors.map((factor, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="flex justify-between items-end">
-                    <span className="text-xs font-bold text-white">{factor.name}</span>
-                    <span className={cn(
-                      "text-[9px] font-black px-1.5 rounded",
-                      factor.level === 'CRITICAL' || factor.level === 'EXTREME' ? "bg-risk-crash/20 text-risk-crash" : "bg-secondary/20 text-secondary"
-                    )}>
-                      {factor.level}
-                    </span>
-                  </div>
-                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className={cn(
-                        "h-full transition-all duration-1000",
-                        factor.level === 'CRITICAL' || factor.level === 'EXTREME' ? "bg-risk-crash" : "bg-secondary"
-                      )} 
-                      style={{ width: factor.level === 'CRITICAL' || factor.level === 'EXTREME' ? '100%' : '60%' }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-muted-foreground font-medium italic">{factor.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Expert Lesson Card */}
           <div className="bg-secondary/10 border-2 border-secondary/20 rounded-[2rem] p-6 flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-secondary/20 rounded-xl text-secondary">
-                <Target className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-secondary">Expert Post-Mortem</span>
+              <Target className="w-5 h-5 text-secondary" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-secondary">Axiom of Time</span>
             </div>
             <p className="text-xs leading-relaxed text-white/80 font-semibold italic">
-              "{history.lesson}"
+              "Financial disorder follows math. By mapping 1875 logic to modern liquidity, we find that panics are not random—they are rhythmic washes of the systemic tide."
             </p>
           </div>
         </div>
-      </Tabs>
+      )}
 
       <footer className="mt-auto px-4 text-center">
         <p className="text-[9px] text-muted-foreground/40 font-bold uppercase tracking-[0.3em]">Institutional Grade Data • Educational Archive</p>
