@@ -16,7 +16,11 @@ import {
   TrendingUp,
   BarChart3,
   Info,
-  Waves
+  Waves,
+  BrainCircuit,
+  Binary,
+  ArrowUpRight,
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -307,7 +311,6 @@ export default function HistoryPage() {
                 </ChartContainer>
               </div>
 
-              {/* Benner Legend */}
               <div className="grid grid-cols-3 gap-2 pt-2">
                 <div className="text-center p-3 bg-muted/10 rounded-2xl border border-border/40">
                   <Zap className="w-4 h-4 mx-auto mb-1 text-risk-crash" />
@@ -328,7 +331,39 @@ export default function HistoryPage() {
             </div>
           </div>
 
-          {/* Cycle Anatomy Details */}
+          <div className="bg-secondary/10 border border-secondary/20 rounded-[2rem] p-7 space-y-6">
+             <div className="flex items-center gap-3">
+              <BrainCircuit className="w-5 h-5 text-secondary" />
+              <h3 className="text-xs font-black uppercase tracking-widest text-white">Predictive Intelligence Terminal</h3>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black text-secondary uppercase tracking-widest">Phase: Current Transition</span>
+                  <Badge className="bg-secondary text-[8px]">RECOVERY (B-C)</Badge>
+                </div>
+                <p className="text-xs font-bold text-white leading-tight">2024 - 2026 Prediction: The High Price Run</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  We are currently transitioning from the "Hard Times" bottom of 2022-2023. According to Benner, 2024-2025 is a period of industrial re-expansion. The cycle predicts a major "Series B" High Price peak in <strong className="text-white">Late 2026</strong>. This aligns with modern liquidity cycles following interest rate pivots.
+                </p>
+              </div>
+
+              <div className="h-px w-full bg-secondary/20" />
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black text-risk-crash uppercase tracking-widest">Phase: Long-Term Horizon</span>
+                  <Badge variant="outline" className="border-risk-crash/40 text-risk-crash text-[8px]">PANIC WARNING</Badge>
+                </div>
+                <p className="text-xs font-bold text-white leading-tight">2035 Projection: Systemic Panic Phase</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Benner's 16-18-20 year sequence identifies <strong className="text-white">2035</strong> as the next major "Series A" Panic year. This correlates with aging debt cycles and projected fiscal stressors. Risk management protocols should prepare for increasing volatility as we approach the 2030s.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-muted/10 rounded-3xl p-6 border border-border space-y-4">
             <div className="flex items-center gap-2">
               <Waves className="w-4 h-4 text-secondary" />
@@ -359,10 +394,9 @@ export default function HistoryPage() {
             </div>
           </div>
 
-          {/* Pig Iron Detail */}
           <div className="bg-card border border-border rounded-2xl p-5 flex items-start gap-4">
             <div className="p-3 bg-background rounded-xl border border-border">
-              <LineChart className="w-5 h-5 text-secondary" />
+              <Binary className="w-5 h-5 text-secondary" />
             </div>
             <div className="space-y-1">
               <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Historical Basis</p>
@@ -381,10 +415,10 @@ export default function HistoryPage() {
             
             <div className="space-y-3">
               {[
-                { year: "2007-2008", cycle: "High to Panic", result: "Series B (High) led to Series A (Panic) crash.", color: "text-risk-crash" },
-                { year: "2020-2021", cycle: "Panic Phase", result: "COVID liquidity shock matched panic rhythm.", color: "text-risk-elevated" },
-                { year: "2022-2023", cycle: "Hard Times", result: "Series C (Low) accumulation phase.", color: "text-risk-high" },
-                { year: "2024-2026", cycle: "Accumulation", result: "Current: Transition from hard times to high.", color: "text-risk-low" }
+                { year: "2024-2026", cycle: "Accumulation to Peak", result: "Current Transition: Moving toward Series B High Prices.", color: "text-risk-low", icon: <ArrowUpRight className="w-4 h-4" /> },
+                { year: "2022-2023", cycle: "Hard Times", result: "Series C (Low) accumulation phase matched reality.", color: "text-risk-high", icon: <ShieldCheck className="w-4 h-4" /> },
+                { year: "2020-2021", cycle: "Panic Phase", result: "COVID shock perfectly timed with Panic sequence.", color: "text-risk-elevated", icon: <AlertCircle className="w-4 h-4" /> },
+                { year: "2007-2008", cycle: "High to Panic", result: "Series B (High) led to Series A (Panic) crash.", color: "text-risk-crash", icon: <TrendingDown className="w-4 h-4" /> }
               ].map((cor, i) => (
                 <div key={i} className="bg-card border border-border rounded-2xl p-4 flex justify-between items-center group hover:border-secondary/30 transition-all">
                   <div className="flex flex-col gap-0.5">
@@ -392,7 +426,9 @@ export default function HistoryPage() {
                     <span className="text-sm font-bold text-white">{cor.cycle}</span>
                     <p className="text-[10px] text-muted-foreground font-medium">{cor.result}</p>
                   </div>
-                  <ArrowRight className={cn("w-4 h-4 shrink-0", cor.color)} />
+                  <div className={cn("shrink-0", cor.color)}>
+                    {cor.icon}
+                  </div>
                 </div>
               ))}
             </div>
