@@ -1,79 +1,32 @@
-import type {Metadata, Viewport} from 'next';
+"use client";
+
 import './globals.css';
-import {MobileNav} from '@/components/mobile-nav';
-import {Toaster} from '@/components/ui/toaster';
-
-export const metadata: Metadata = {
-  title: 'CrashGuard | Global Market Risk & Capital Protection',
-  description: 'Monitor global market crash risks with real-time indicators for US, India, and Crypto markets. Use rule-based checklists and premium crisis playbooks to protect your capital.',
-  keywords: ['market crash', 'risk management', 'crypto risk', 'stock market crash', 'capital protection', 'systemic risk', 'finance app', 'PWA'],
-  authors: [{ name: 'CrashGuard Team' }],
-  creator: 'CrashGuard',
-  publisher: 'CrashGuard',
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'CrashGuard',
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: 'https://crashguard.app',
-    title: 'CrashGuard | Real-time Market Risk Intelligence',
-    description: 'Professional-grade market risk monitoring and systemic collapse prevention for investors and traders.',
-    siteName: 'CrashGuard',
-    images: [
-      {
-        url: 'https://picsum.photos/seed/crashguard/1200/630',
-        width: 1200,
-        height: 630,
-        alt: 'CrashGuard Risk Dashboard',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'CrashGuard | Market Risk Manager',
-    description: 'Track global systemic risk and protect your capital with rule-based intelligence.',
-    images: ['https://picsum.photos/seed/crashguard/1200/630'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
-};
-
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  viewportFit: 'cover',
-  themeColor: '#121212',
-};
+import { MobileNav } from '@/components/mobile-nav';
+import { Toaster } from '@/components/ui/toaster';
+import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+import { trackEvent } from '@/lib/analytics';
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Basic automatic page tracking
+    const pageLabel = pathname === '/' ? 'Dashboard' : pathname.replace('/', '').charAt(0).toUpperCase() + pathname.slice(2);
+    trackEvent('page_view', pageLabel);
+  }, [pathname]);
+
   return (
     <html lang="en" className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
