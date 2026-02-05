@@ -86,7 +86,7 @@ export default function SettingsPage() {
       localStorage.setItem('crashguard_supporter', 'true');
       setIsProcessing(false);
       setShowDonationDialog(false);
-      toast({ title: "Support Logged", description: "Thank you!" });
+      toast({ title: "Contribution Noted", description: "Your kindness fuels our research." });
     }, 1500);
   };
 
@@ -98,7 +98,7 @@ export default function SettingsPage() {
           {isSupporter && (
             <div className="flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-full">
               <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-              <span className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Supporter</span>
+              <span className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Patron</span>
             </div>
           )}
           <Button variant="ghost" size="icon" onClick={() => router.push('/admin')}>
@@ -139,26 +139,35 @@ export default function SettingsPage() {
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 px-1">
-          <Heart className="w-4 h-4 text-pink-500" />
-          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Support CrashGuard</h3>
+          <Coffee className="w-4 h-4 text-orange-400" />
+          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Nourish the Research</h3>
         </div>
         <div className="bg-gradient-to-br from-secondary/10 to-transparent rounded-[2rem] p-6 border border-secondary/20 space-y-5">
           <p className="text-xs leading-relaxed text-muted-foreground font-medium">
-            CrashGuard helps protect capital. If it helps you stay disciplined, support its development.
+            If our playbooks and cycles have served as your shield, consider fueling further intelligence with a coffee or green tea.
           </p>
           
           {isSupporter ? (
             <div className="bg-background/40 rounded-2xl p-4 flex flex-col items-center gap-2 border border-yellow-500/20">
               <div className="p-2 bg-yellow-500/20 rounded-full">
-                <Coffee className="w-6 h-6 text-yellow-500" />
+                <Heart className="w-6 h-6 text-pink-500" />
               </div>
-              <p className="text-[11px] font-bold text-white text-center">You are a Supporter! Thank you.</p>
+              <p className="text-[11px] font-bold text-white text-center">You've fueled the guard. Thank you!</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-3">
-              <Button variant="outline" className="rounded-xl font-bold h-12 text-xs border-secondary/30" onClick={() => handleDonateInitiate("$3")}>$3</Button>
-              <Button variant="outline" className="rounded-xl font-bold h-12 text-xs border-secondary/30" onClick={() => handleDonateInitiate("$5")}>$5</Button>
-              <Button variant="outline" className="rounded-xl font-bold h-12 text-xs border-secondary/30" onClick={() => handleDonateInitiate("$10+")}>$10+</Button>
+              <Button variant="outline" className="rounded-xl font-bold h-12 text-[10px] border-secondary/30 flex flex-col gap-0.5" onClick={() => handleDonateInitiate("$3")}>
+                <span>$3</span>
+                <span className="text-[8px] font-normal opacity-60">Coffee</span>
+              </Button>
+              <Button variant="outline" className="rounded-xl font-bold h-12 text-[10px] border-secondary/30 flex flex-col gap-0.5" onClick={() => handleDonateInitiate("$5")}>
+                <span>$5</span>
+                <span className="text-[8px] font-normal opacity-60">Green Tea</span>
+              </Button>
+              <Button variant="outline" className="rounded-xl font-bold h-12 text-[10px] border-secondary/30 flex flex-col gap-0.5" onClick={() => handleDonateInitiate("$10+")}>
+                <span>$10+</span>
+                <span className="text-[8px] font-normal opacity-60">The Pot</span>
+              </Button>
             </div>
           )}
         </div>
@@ -173,16 +182,16 @@ export default function SettingsPage() {
       <AlertDialog open={showDonationDialog} onOpenChange={setShowDonationDialog}>
         <AlertDialogContent className="rounded-[2rem] border-secondary/20">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-center">Support CrashGuard</AlertDialogTitle>
+            <AlertDialogTitle className="text-center">A Token of Appreciation</AlertDialogTitle>
             <AlertDialogDescription className="text-center text-xs">
               Redirecting to Razorpay for a contribution of <span className="font-bold text-white">{selectedAmount}</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-col gap-2">
             <AlertDialogAction onClick={(e) => { e.preventDefault(); confirmDonation(); }} disabled={isProcessing} className="bg-secondary text-white font-bold rounded-xl h-12">
-              {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : `Support with ${selectedAmount}`}
+              {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : `Contribute ${selectedAmount}`}
             </AlertDialogAction>
-            <AlertDialogCancel disabled={isProcessing} className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isProcessing} className="rounded-xl">Perhaps later</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
