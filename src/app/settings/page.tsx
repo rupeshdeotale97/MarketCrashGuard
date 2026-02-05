@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { User, Bell, ShieldInfo, ExternalLink } from 'lucide-react';
+import { User, Bell, ShieldAlert, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
@@ -38,7 +38,7 @@ export default function SettingsPage() {
         <div className="px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-secondary/10 rounded-xl text-secondary">
-              <Bell className="w-5 h-5" />
+              < Bell className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
               <span className="font-semibold">Risk Alerts</span>
@@ -56,7 +56,7 @@ export default function SettingsPage() {
       {/* Disclaimer Section */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2 px-1">
-          <ShieldInfo className="w-4 h-4 text-muted-foreground" />
+          <ShieldAlert className="w-4 h-4 text-muted-foreground" />
           <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Legal Disclaimer</h3>
         </div>
         <div className="bg-muted/30 rounded-3xl p-6 border border-border">
