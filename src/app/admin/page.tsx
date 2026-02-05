@@ -7,7 +7,7 @@ import { auth } from '@/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShieldLock, Loader2 } from 'lucide-react';
+import { Shield, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminLoginPage() {
@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md bg-card border border-border rounded-[2.5rem] p-8 shadow-2xl space-y-8">
         <div className="flex flex-col items-center text-center gap-2">
           <div className="p-4 bg-secondary/10 rounded-full text-secondary">
-            <ShieldLock className="w-10 h-10" />
+            <Shield className="w-10 h-10" />
           </div>
           <h1 className="text-2xl font-black text-white">Admin Terminal</h1>
           <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Secure Access Only</p>

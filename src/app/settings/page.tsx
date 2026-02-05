@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { User, Bell, ShieldAlert, ExternalLink, Heart, Check, Coffee, Star, Loader2, ShieldLock } from 'lucide-react';
+import { User, Bell, ShieldAlert, ExternalLink, Heart, Check, Coffee, Star, Loader2, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -179,7 +179,7 @@ export default function SettingsPage() {
             </div>
           )}
           <Button variant="ghost" size="icon" onClick={() => router.push('/admin')}>
-            <ShieldLock className="w-5 h-5 text-muted-foreground/40" />
+            <Shield className="w-5 h-5 text-muted-foreground/40" />
           </Button>
         </div>
       </header>
