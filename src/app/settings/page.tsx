@@ -1,12 +1,16 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { User, Bell, ShieldAlert, ExternalLink, Heart, Check, Coffee, Star, Loader2 } from 'lucide-react';
+import { User, Bell, ShieldAlert, ExternalLink, Heart, Check, Coffee, Star, Loader2, ShieldLock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +30,7 @@ export default function SettingsPage() {
   const [selectedAmount, setSelectedAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     // Supporter status
@@ -125,34 +130,58 @@ export default function SettingsPage() {
     setShowDonationDialog(true);
   };
 
-  const confirmDonation = () => {
+  const confirmDonation = async () => {
     setIsProcessing(true);
-    const razorpayLink = 'https://razorpay.me/@poojarupeshdeotale';
-    window.open(razorpayLink, '_blank');
     
-    setTimeout(() => {
-      setIsSupporter(true);
-      localStorage.setItem('crashguard_supporter', 'true');
-      setIsProcessing(false);
-      setShowDonationDialog(false);
-      
-      toast({
-        title: "Success",
-        description: "Thank you for your voluntary support!",
+    try {
+      // Log the support intent to Firestore
+      await addDoc(collection(db, "donations"), {
+        amount: selectedAmount,
+        timestamp: serverTimestamp(),
+        mode: isTrader ? 'Trader' : 'Investor',
+        status: 'INTENT'
       });
-    }, 1500);
+
+      // Redirect to Razorpay
+      const razorpayLink = 'https://razorpay.me/@poojarupeshdeotale';
+      window.open(razorpayLink, '_blank');
+      
+      setTimeout(() => {
+        setIsSupporter(true);
+        localStorage.setItem('crashguard_supporter', 'true');
+        setIsProcessing(false);
+        setShowDonationDialog(false);
+        
+        toast({
+          title: "Support Logged",
+          description: "Thank you for your voluntary support!",
+        });
+      }, 1000);
+    } catch (e) {
+      setIsProcessing(false);
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description: "Could not log payment. Please check your network.",
+      });
+    }
   };
 
   return (
     <div className="flex flex-col gap-6 px-5 pt-8 pb-12">
       <header className="flex justify-between items-center">
         <h1 className="text-3xl font-extrabold tracking-tight text-white">Settings</h1>
-        {isSupporter && (
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-full animate-in zoom-in duration-300">
-            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-            <span className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Supporter</span>
-          </div>
-        )}
+        <div className="flex gap-2">
+          {isSupporter && (
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-full">
+              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+              <span className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Supporter</span>
+            </div>
+          )}
+          <Button variant="ghost" size="icon" onClick={() => router.push('/admin')}>
+            <ShieldLock className="w-5 h-5 text-muted-foreground/40" />
+          </Button>
+        </div>
       </header>
 
       {/* Preferences Section */}
@@ -287,7 +316,7 @@ export default function SettingsPage() {
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Redirecting...
+                  Logging...
                 </>
               ) : (
                 `Support with ${selectedAmount}`
