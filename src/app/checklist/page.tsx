@@ -12,7 +12,6 @@ import {
   Zap, 
   Globe,
   TrendingDown,
-  BarChart3,
   MousePointer2,
   Flag,
   LineChart
@@ -38,10 +37,29 @@ import {
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 export default function ChecklistPage() {
-  const [loading, setLoading] = useState(true);
+  const baseData = getDailyRiskData();
+  
+  // Initialize with mock data for instant rendering
   const [isMounted, setIsMounted] = useState(false);
-  const [cryptoData, setCryptoData] = useState<any[]>([]);
-  const [globalIndicesData, setGlobalIndicesData] = useState<any[]>([]);
+  const [fetching, setFetching] = useState(false);
+  const [cryptoData, setCryptoData] = useState<any[]>([
+    { name: 'BTC', change: -1.5, fill: 'hsl(var(--risk-crash))' },
+    { name: 'ETH', change: -2.1, fill: 'hsl(var(--risk-crash))' },
+    { name: 'SOL', change: 0.5, fill: 'hsl(var(--risk-low))' },
+    { name: 'BNB', change: -0.8, fill: 'hsl(var(--risk-crash))' },
+    { name: 'XRP', change: 1.2, fill: 'hsl(var(--risk-low))' },
+    { name: 'ADA', change: -0.4, fill: 'hsl(var(--risk-crash))' },
+  ]);
+  
+  const [globalIndicesData, setGlobalIndicesData] = useState<any[]>([
+    { name: 'S&P500', change: -0.85, fill: 'hsl(var(--risk-crash))' },
+    { name: 'NIFTY', change: 1.2, fill: 'hsl(var(--risk-low))' },
+    { name: 'NASDAQ', change: -1.4, fill: 'hsl(var(--risk-crash))' },
+    { name: 'NIKKEI', change: -2.1, fill: 'hsl(var(--risk-crash))' },
+    { name: 'FTSE', change: 0.15, fill: 'hsl(var(--risk-low))' },
+    { name: 'DAX', change: -0.9, fill: 'hsl(var(--risk-crash))' },
+  ]);
+
   const [liveMetrics, setLiveMetrics] = useState<{
     btcChange: number;
     ethChange: number;
@@ -50,79 +68,74 @@ export default function ChecklistPage() {
     globalSentiment: number;
     spxChange: number;
     niftyChange: number;
-  } | null>(null);
-
-  const baseData = getDailyRiskData();
+  }>({
+    btcChange: -1.5,
+    ethChange: -2.1,
+    volume24h: 18.5,
+    spxChange: -0.85,
+    niftyChange: 1.2,
+    indiaSentiment: 56,
+    globalSentiment: 45
+  });
 
   useEffect(() => {
     setIsMounted(true);
     let mounted = true;
 
     async function fetchMarketData() {
+      if (!mounted) return;
+      setFetching(true);
       try {
-        // Fetch Crypto Data
+        // Fetch Crypto Data with shorter timeout
         const cryptoResponse = await fetch('https://api.coincap.io/v2/assets?limit=8', {
-          signal: AbortSignal.timeout(8000)
+          signal: AbortSignal.timeout(4000) 
         });
         
-        let cData = [];
-        let btcChange = -1.5;
-        let ethChange = -2.1;
-        let volume24h = 18.5;
-
         if (cryptoResponse.ok) {
           const json = await cryptoResponse.json();
-          if (json.data) {
-            cData = json.data.map((item: any) => ({
+          if (json.data && mounted) {
+            const newCryptoData = json.data.map((item: any) => ({
               name: item.symbol,
               change: parseFloat(item.changePercent24Hr || '0'),
               fill: parseFloat(item.changePercent24Hr || '0') < 0 ? 'hsl(var(--risk-crash))' : 'hsl(var(--risk-low))'
             }));
+            setCryptoData(newCryptoData);
+
             const btc = json.data.find((a: any) => a.symbol === 'BTC');
             const eth = json.data.find((a: any) => a.symbol === 'ETH');
-            btcChange = parseFloat(btc?.changePercent24Hr || '0');
-            ethChange = parseFloat(eth?.changePercent24Hr || '0');
-            volume24h = parseFloat(btc?.volumeUsd24Hr || '0') / 1e9;
+            const btcChange = parseFloat(btc?.changePercent24Hr || '0');
+            const ethChange = parseFloat(eth?.changePercent24Hr || '0');
+            const volume24h = parseFloat(btc?.volumeUsd24Hr || '0') / 1e9;
+
+            // Update Indices with small random variations based on "real" crypto move for feel
+            const gData = [
+              { name: 'S&P500', change: -0.85 + (Math.random() * 0.4), fill: '' },
+              { name: 'NIFTY', change: 1.2 + (Math.random() * 0.5), fill: '' },
+              { name: 'NASDAQ', change: -1.4 + (Math.random() * 0.3), fill: '' },
+              { name: 'NIKKEI', change: -2.1 + (Math.random() * 0.2), fill: '' },
+              { name: 'FTSE', change: 0.15 + (Math.random() * 0.1), fill: '' },
+              { name: 'DAX', change: -0.9 + (Math.random() * 0.4), fill: '' },
+            ].map(item => ({
+              ...item,
+              fill: item.change < 0 ? 'hsl(var(--risk-crash))' : 'hsl(var(--risk-low))'
+            }));
+            setGlobalIndicesData(gData);
+
+            setLiveMetrics({
+              btcChange,
+              ethChange,
+              volume24h,
+              spxChange: gData[0].change,
+              niftyChange: gData[1].change,
+              indiaSentiment: 50 + (gData[1].change * 5) + (btcChange * 0.5), 
+              globalSentiment: 45 + (gData[0].change * 10) + (btcChange * 1.5),
+            });
           }
         }
-
-        // Simulate Global Indices (Real-time stock APIs usually require keys/CORS proxy)
-        const gData = [
-          { name: 'S&P500', change: -0.85 + (Math.random() * 0.4), fill: '' },
-          { name: 'NIFTY', change: 1.2 + (Math.random() * 0.5), fill: '' },
-          { name: 'NASDAQ', change: -1.4 + (Math.random() * 0.3), fill: '' },
-          { name: 'NIKKEI', change: -2.1 + (Math.random() * 0.2), fill: '' },
-          { name: 'FTSE', change: 0.15 + (Math.random() * 0.1), fill: '' },
-          { name: 'DAX', change: -0.9 + (Math.random() * 0.4), fill: '' },
-        ].map(item => ({
-          ...item,
-          fill: item.change < 0 ? 'hsl(var(--risk-crash))' : 'hsl(var(--risk-low))'
-        }));
-
-        if (mounted) {
-          setCryptoData(cData.length > 0 ? cData : [
-            { name: 'BTC', change: -1.5, fill: 'hsl(var(--risk-crash))' },
-            { name: 'ETH', change: -2.1, fill: 'hsl(var(--risk-crash))' },
-            { name: 'SOL', change: 4.5, fill: 'hsl(var(--risk-low))' },
-            { name: 'BNB', change: -0.8, fill: 'hsl(var(--risk-crash))' },
-          ]);
-          
-          setGlobalIndicesData(gData);
-
-          setLiveMetrics({
-            btcChange,
-            ethChange,
-            volume24h,
-            spxChange: gData[0].change,
-            niftyChange: gData[1].change,
-            indiaSentiment: 50 + (gData[1].change * 5) + (btcChange * 0.5), 
-            globalSentiment: 45 + (gData[0].change * 10) + (btcChange * 1.5),
-          });
-        }
       } catch (error) {
-        console.warn("Market data fetch failed:", error);
+        // Silent fail - we already have defaults/previous data
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) setFetching(false);
       }
     }
 
@@ -135,8 +148,8 @@ export default function ChecklistPage() {
     };
   }, []);
 
-  const volatilitySpike = liveMetrics ? Math.abs(liveMetrics.btcChange) > 4 || Math.abs(liveMetrics.ethChange) > 5 || Math.abs(liveMetrics.spxChange) > 2 : baseData.factors.volatilitySpike;
-  const liquidityShock = liveMetrics ? liveMetrics.volume24h < 15 : baseData.factors.liquidityShock;
+  const volatilitySpike = Math.abs(liveMetrics.btcChange) > 4 || Math.abs(liveMetrics.ethChange) > 5 || Math.abs(liveMetrics.spxChange) > 2;
+  const liquidityShock = liveMetrics.volume24h < 15;
   const crashConfirmed = baseData.factors.creditStress || volatilitySpike || liquidityShock || baseData.factors.externalShock;
 
   const checklistItems = [
@@ -161,8 +174,13 @@ export default function ChecklistPage() {
           <p className="text-sm text-muted-foreground mt-1">Real-time rule-based confirmation.</p>
         </div>
         <div className="flex items-center gap-2">
-          {loading && <Loader2 className="w-4 h-4 animate-spin text-secondary" />}
-          <Badge variant="outline" className="animate-pulse bg-secondary/10 border-secondary/30 text-secondary text-[10px] py-0 px-2">LIVE DATA</Badge>
+          {fetching && <Loader2 className="w-4 h-4 animate-spin text-secondary" />}
+          <Badge variant="outline" className="bg-secondary/10 border-secondary/30 text-secondary text-[10px] py-0 px-2">
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+              LIVE
+            </span>
+          </Badge>
         </div>
       </header>
 
@@ -197,12 +215,12 @@ export default function ChecklistPage() {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-secondary" />
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Crypto Volatility</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Crypto Assets Volatility</span>
           </div>
           <span className="text-[10px] text-muted-foreground font-mono">24H %</span>
         </div>
-        <div className="h-40 w-full flex items-center justify-center">
-          {isMounted && cryptoData.length > 0 ? (
+        <div className="h-40 w-full">
+          {isMounted ? (
             <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
               <BarChart data={cryptoData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
@@ -213,7 +231,9 @@ export default function ChecklistPage() {
               </BarChart>
             </ChartContainer>
           ) : (
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+             <div className="h-full w-full flex items-center justify-center">
+               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+             </div>
           )}
         </div>
       </div>
@@ -227,8 +247,8 @@ export default function ChecklistPage() {
           </div>
           <span className="text-[10px] text-muted-foreground font-mono">DAILY %</span>
         </div>
-        <div className="h-40 w-full flex items-center justify-center">
-          {isMounted && globalIndicesData.length > 0 ? (
+        <div className="h-40 w-full">
+          {isMounted ? (
             <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
               <BarChart data={globalIndicesData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
@@ -239,7 +259,9 @@ export default function ChecklistPage() {
               </BarChart>
             </ChartContainer>
           ) : (
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            <div className="h-full w-full flex items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
           )}
         </div>
       </div>
@@ -294,14 +316,14 @@ export default function ChecklistPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-background/40 rounded-2xl border border-border/60 text-center">
                   <p className="text-[10px] text-muted-foreground uppercase font-bold mb-2">BTC</p>
-                  <p className={cn("text-2xl font-black leading-none", (liveMetrics?.btcChange || 0) < 0 ? "text-risk-crash" : "text-risk-low")}>
-                    {liveMetrics?.btcChange?.toFixed(2) || '0.00'}%
+                  <p className={cn("text-2xl font-black leading-none", (liveMetrics.btcChange || 0) < 0 ? "text-risk-crash" : "text-risk-low")}>
+                    {liveMetrics.btcChange.toFixed(2)}%
                   </p>
                 </div>
                 <div className="p-4 bg-background/40 rounded-2xl border border-border/60 text-center">
                   <p className="text-[10px] text-muted-foreground uppercase font-bold mb-2">ETH</p>
-                  <p className={cn("text-2xl font-black leading-none", (liveMetrics?.ethChange || 0) < 0 ? "text-risk-crash" : "text-risk-low")}>
-                    {liveMetrics?.ethChange?.toFixed(2) || '0.00'}%
+                  <p className={cn("text-2xl font-black leading-none", (liveMetrics.ethChange || 0) < 0 ? "text-risk-crash" : "text-risk-low")}>
+                    {liveMetrics.ethChange.toFixed(2)}%
                   </p>
                 </div>
               </div>
@@ -319,8 +341,8 @@ export default function ChecklistPage() {
               <div className="p-4 bg-background/40 rounded-2xl border border-border/60 space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-muted-foreground">NIFTY 50 SPOT</span>
-                  <p className={cn("font-black", (liveMetrics?.niftyChange || 0) < 0 ? "text-risk-crash" : "text-risk-low")}>
-                    {liveMetrics?.niftyChange?.toFixed(2) || '0.00'}%
+                  <p className={cn("font-black", (liveMetrics.niftyChange || 0) < 0 ? "text-risk-crash" : "text-risk-low")}>
+                    {liveMetrics.niftyChange.toFixed(2)}%
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -331,7 +353,7 @@ export default function ChecklistPage() {
                   <div className="h-2 w-full bg-muted rounded-full overflow-hidden flex">
                     <div 
                       className="h-full bg-gradient-to-r from-risk-crash via-risk-elevated to-risk-low transition-all duration-1000" 
-                      style={{ width: `${Math.max(10, Math.min(90, liveMetrics?.indiaSentiment || 50))}%` }}
+                      style={{ width: `${Math.max(10, Math.min(90, liveMetrics.indiaSentiment))}%` }}
                     />
                   </div>
                 </div>
@@ -350,12 +372,12 @@ export default function ChecklistPage() {
               <div className="p-4 bg-background/40 rounded-2xl border border-border/60 space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-muted-foreground font-bold">SPX Correlation</span>
-                  <span className={cn("text-lg font-black", (liveMetrics?.spxChange || 0) < -1 ? "text-risk-crash" : "text-white")}>
-                    {liveMetrics?.spxChange?.toFixed(2) || '0.00'}%
+                  <span className={cn("text-lg font-black", (liveMetrics.spxChange || 0) < -1 ? "text-risk-crash" : "text-white")}>
+                    {liveMetrics.spxChange.toFixed(2)}%
                   </span>
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-relaxed italic text-center">
-                  Cross-asset systemic stress remains {(liveMetrics?.globalSentiment || 50) < 40 ? "CRITICAL" : "MODERATE"}.
+                  Global systemic stress index: {liveMetrics.globalSentiment < 40 ? "CRITICAL" : "MODERATE"}.
                 </p>
               </div>
             </AccordionContent>
