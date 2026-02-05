@@ -4,8 +4,12 @@ import {MobileNav} from '@/components/mobile-nav';
 import {Toaster} from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'CrashGuard',
-  description: 'Track global market crash risk with rule-based indicators.',
+  title: 'CrashGuard | Global Market Risk & Capital Protection',
+  description: 'Monitor global market crash risks with real-time indicators for US, India, and Crypto markets. Use rule-based checklists and premium crisis playbooks to protect your capital.',
+  keywords: ['market crash', 'risk management', 'crypto risk', 'stock market crash', 'capital protection', 'systemic risk', 'finance app', 'PWA'],
+  authors: [{ name: 'CrashGuard Team' }],
+  creator: 'CrashGuard',
+  publisher: 'CrashGuard',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -14,6 +18,39 @@ export const metadata: Metadata = {
   },
   formatDetection: {
     telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://crashguard.app',
+    title: 'CrashGuard | Real-time Market Risk Intelligence',
+    description: 'Professional-grade market risk monitoring and systemic collapse prevention for investors and traders.',
+    siteName: 'CrashGuard',
+    images: [
+      {
+        url: 'https://picsum.photos/seed/crashguard/1200/630',
+        width: 1200,
+        height: 630,
+        alt: 'CrashGuard Risk Dashboard',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'CrashGuard | Market Risk Manager',
+    description: 'Track global systemic risk and protect your capital with rule-based intelligence.',
+    images: ['https://picsum.photos/seed/crashguard/1200/630'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
