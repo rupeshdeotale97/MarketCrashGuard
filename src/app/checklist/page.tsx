@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getDailyRiskData } from '@/lib/mock-data';
-import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Loader2, Info, TrendingDown, Activity, Zap, Globe } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Loader2, Info, Activity, Zap, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -24,12 +24,19 @@ export default function ChecklistPage() {
   const baseData = getDailyRiskData();
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchMarketData() {
       try {
-        const response = await fetch('https://api.coincap.io/v2/assets?limit=5');
+        const response = await fetch('https://api.coincap.io/v2/assets?limit=5', {
+          signal: AbortSignal.timeout(5000) // 5 second timeout
+        });
+        
+        if (!response.ok) throw new Error('Network response was not ok');
+        
         const json = await response.json();
         
-        if (json.data) {
+        if (isMounted && json.data) {
           const btc = json.data.find((a: any) => a.symbol === 'BTC');
           const eth = json.data.find((a: any) => a.symbol === 'ETH');
           
@@ -41,15 +48,20 @@ export default function ChecklistPage() {
           });
         }
       } catch (error) {
-        console.error("Failed to fetch live market data", error);
+        // Log silently or handle locally to avoid Next.js error overlay
+        console.warn("Market data fetch failed, using fallback metrics:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
 
     fetchMarketData();
-    const interval = setInterval(fetchMarketData, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchMarketData, 60000); // Refresh every 60s
+    
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // Derived logic for live checklist items
@@ -144,13 +156,13 @@ export default function ChecklistPage() {
                 <div className="p-3 bg-background/50 rounded-xl border border-border">
                   <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">BTC 24h Change</p>
                   <p className={cn("text-lg font-bold", (liveData?.btcChange || 0) < 0 ? "text-risk-crash" : "text-risk-low")}>
-                    {liveData?.btcChange?.toFixed(2)}%
+                    {liveData?.btcChange?.toFixed(2) || '0.00'}%
                   </p>
                 </div>
                 <div className="p-3 bg-background/50 rounded-xl border border-border">
                   <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">ETH 24h Change</p>
                   <p className={cn("text-lg font-bold", (liveData?.ethChange || 0) < 0 ? "text-risk-crash" : "text-risk-low")}>
-                    {liveData?.ethChange?.toFixed(2)}%
+                    {liveData?.ethChange?.toFixed(2) || '0.00'}%
                   </p>
                 </div>
               </div>
@@ -168,7 +180,7 @@ export default function ChecklistPage() {
               <div className="p-4 bg-background/50 rounded-xl border border-border space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-muted-foreground font-medium">BTC 24h Volume</span>
-                  <span className="text-sm font-bold text-white">${liveData?.volume24h?.toFixed(2)}B</span>
+                  <span className="text-sm font-bold text-white">${liveData?.volume24h?.toFixed(2) || '0.00'}B</span>
                 </div>
                 <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                   <div 
@@ -190,7 +202,7 @@ export default function ChecklistPage() {
             </AccordionTrigger>
             <AccordionContent className="pb-4 pt-1 text-xs text-muted-foreground leading-relaxed">
               Global system shock is evaluated using cross-asset correlation. Current equity proxy indicates a 
-              <span className="text-white font-bold"> {liveData?.marketCapChange}%</span> estimated deviation from monthly mean. 
+              <span className="text-white font-bold"> {liveData?.marketCapChange || '-2.4'}%</span> estimated deviation from monthly mean. 
               External shocks are manually adjusted based on central bank credit injection rates.
             </AccordionContent>
           </AccordionItem>

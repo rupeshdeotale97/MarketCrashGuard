@@ -1,25 +1,35 @@
+"use client";
 
+import { useState, useEffect } from 'react';
 import { getDailyRiskData } from '@/lib/mock-data';
 import { RiskCard } from '@/components/risk-card';
 import { AlertCircle, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
+  const [today, setToday] = useState<string>("");
   const data = getDailyRiskData();
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  });
+
+  useEffect(() => {
+    setToday(new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    }));
+  }, []);
 
   return (
     <div className="flex flex-col gap-6 px-5 pt-8">
       {/* Header Section */}
       <header className="flex flex-col gap-2">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Calendar className="w-4 h-4" />
-          <span className="text-sm font-medium uppercase tracking-widest">{today}</span>
+        <div className="flex items-center gap-2 text-muted-foreground h-5">
+          {today && (
+            <>
+              <Calendar className="w-4 h-4" />
+              <span className="text-sm font-medium uppercase tracking-widest">{today}</span>
+            </>
+          )}
         </div>
         <h1 className="text-3xl font-extrabold tracking-tight text-white">CrashGuard</h1>
       </header>
