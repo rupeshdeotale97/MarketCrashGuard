@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'firebase/auth';
 import { 
   TrendingUp, 
   Users, 
@@ -13,11 +14,13 @@ import {
   CreditCard,
   Search,
   ShieldCheck,
-  Download
+  Download,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminDashboard() {
   const [payments, setPayments] = useState<any[]>([]);
@@ -25,10 +28,21 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
+
+  const ALLOWED_ADMIN_EMAIL = "rupeshdeotale@gmail.com";
 
   useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+    const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
       if (!user) {
+        router.push('/admin');
+      } else if (user.email !== ALLOWED_ADMIN_EMAIL) {
+        await signOut(auth);
+        toast({
+          variant: "destructive",
+          title: "Access Revoked",
+          description: "Unauthorized session detected.",
+        });
         router.push('/admin');
       } else {
         setAuthenticated(true);
@@ -36,7 +50,7 @@ export default function AdminDashboard() {
     });
 
     return () => unsubscribeAuth();
-  }, [router]);
+  }, [router, toast]);
 
   useEffect(() => {
     if (!authenticated) return;
@@ -84,14 +98,14 @@ export default function AdminDashboard() {
             <h1 className="text-2xl font-black text-white leading-none">Ledger</h1>
             <span className="text-[10px] font-black text-secondary uppercase tracking-widest mt-1 flex items-center gap-1">
               <ShieldCheck className="w-3 h-3" />
-              Verified Session
+              Verified Session: {auth.currentUser?.email}
             </span>
           </div>
         </div>
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => auth.signOut()}
+          onClick={() => signOut(auth)}
           className="rounded-full text-risk-crash hover:bg-risk-crash/10 hover:text-risk-crash"
         >
           <LogOut className="w-5 h-5" />
