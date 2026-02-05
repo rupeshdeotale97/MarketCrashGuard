@@ -16,7 +16,8 @@ import {
   Droplets,
   Info,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Gauge
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +48,7 @@ export default function LiveSignalsPage() {
         // US Markets
         { name: 'S&P 500', region: 'US', price: '5,021.40', change: -0.45 + (Math.random() * 0.2), type: 'global', signal: 'NEUTRAL' },
         { name: 'NASDAQ 100', region: 'US', price: '17,890.10', change: -0.85 + (Math.random() * 0.4), type: 'global', signal: 'BEARISH' },
+        { name: 'Dow Jones', region: 'US', price: '38,628.00', change: -0.12 + (Math.random() * 0.1), type: 'global', signal: 'NEUTRAL' },
         
         // European Markets
         { name: 'FTSE 100', region: 'Europe', price: '7,624.10', change: 0.15 + (Math.random() * 0.2), type: 'global', signal: 'NEUTRAL' },
@@ -151,10 +153,30 @@ export default function LiveSignalsPage() {
   }
 
   const sections = [
-    { title: 'Global Indices', type: 'global', icon: <Globe className="w-4 h-4 text-blue-500" />, interpretation: "Western markets are showing mixed signals as inflation data looms. Asian indices (specifically Hang Seng) are under extreme liquidity pressure, suggesting a localized contagion risk rather than a global systemic collapse." },
-    { title: 'India Domestic', type: 'india', icon: <Flag className="w-4 h-4 text-orange-500" />, interpretation: "Indian benchmarks remain structurally resilient. BANKNIFTY is outperforming the broader NIFTY 50, indicating strong domestic credit health and institutional rotation into financials despite global high-beta selling." },
-    { title: 'Commodity Benchmarks', type: 'commodity', icon: <Mountain className="w-4 h-4 text-yellow-600" />, interpretation: "Gold and Silver are successfully acting as safe harbors. The spike in precious metals alongside declining energy prices (Oil) signals a transition from growth-driven inflation to defensive stagflation positioning." },
-    { title: 'Crypto Velocity', type: 'crypto', icon: <Coins className="w-4 h-4 text-secondary" />, interpretation: "BTC is consolidating within a narrow range, showing lower relative volatility than tech equities. This 'quiet' phase in crypto often precedes a large liquidity move. Watch for a break above $65k or below $62k as a systemic lead indicator." },
+    { 
+      title: 'Global Indices', 
+      type: 'global', 
+      icon: <Globe className="w-4 h-4 text-blue-500" />, 
+      interpretation: "Western markets are showing mixed signals as inflation data looms. Asian indices (specifically Hang Seng) are under extreme liquidity pressure, suggesting a localized contagion risk rather than a global systemic collapse." 
+    },
+    { 
+      title: 'India Domestic', 
+      type: 'india', 
+      icon: <Flag className="w-4 h-4 text-orange-500" />, 
+      interpretation: "Indian benchmarks remain structurally resilient. BANKNIFTY is outperforming the broader NIFTY 50, indicating strong domestic credit health and institutional rotation into financials despite global high-beta selling." 
+    },
+    { 
+      title: 'Commodity Benchmarks', 
+      type: 'commodity', 
+      icon: <Mountain className="w-4 h-4 text-yellow-600" />, 
+      interpretation: "Gold and Silver are successfully acting as safe harbors. The spike in precious metals alongside declining energy prices (Oil) signals a transition from growth-driven inflation to defensive stagflation positioning." 
+    },
+    { 
+      title: 'Crypto Velocity', 
+      type: 'crypto', 
+      icon: <Coins className="w-4 h-4 text-secondary" />, 
+      interpretation: "BTC is consolidating within a narrow range, showing lower relative volatility than tech equities. This 'quiet' phase in crypto often precedes a large liquidity move. Watch for a break above $65k or below $62k as a systemic lead indicator." 
+    },
   ];
 
   return (
@@ -177,9 +199,12 @@ export default function LiveSignalsPage() {
       <div className="bg-card rounded-[2.5rem] border border-border p-8 shadow-2xl space-y-6">
         <div className="flex justify-between items-end">
           <div className="space-y-1">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Aggregated Sentiment</h3>
+            <div className="flex items-center gap-2">
+              <Gauge className="w-4 h-4 text-secondary" />
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Aggregated Sentiment</h3>
+            </div>
             <p className="text-2xl font-black text-white">
-              {getSentimentScore() > 60 ? 'Fear of Missing Out' : getSentimentScore() < 40 ? 'Panic Accumulation' : 'Wait & Watch'}
+              {getSentimentScore() > 60 ? 'Greed Accumulation' : getSentimentScore() < 40 ? 'Panic Capitulation' : 'Neutral Equilibrium'}
             </p>
           </div>
           <div className="text-right">
@@ -188,15 +213,15 @@ export default function LiveSignalsPage() {
         </div>
         <Progress value={getSentimentScore()} className="h-4 bg-muted/30" />
         <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-muted-foreground">
-          <span>Bearish Phase</span>
-          <span>Bullish Regime</span>
+          <span>Bearish Pressure</span>
+          <span>Bullish Momentum</span>
         </div>
       </div>
 
       {/* Index Lists */}
-      <div className="space-y-10">
+      <div className="space-y-12">
         {sections.map((section) => (
-          <div key={section.type} className="space-y-4">
+          <div key={section.type} className="space-y-5">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 {section.icon}
@@ -235,44 +260,59 @@ export default function LiveSignalsPage() {
               ))}
             </div>
 
-            {/* Systemic Interpretation Card */}
-            <div className="bg-muted/10 rounded-2xl border border-border/40 p-5 mt-4 group hover:border-secondary/20 transition-all">
-              <div className="flex items-center gap-2 mb-3">
-                <Info className="w-3.5 h-3.5 text-secondary" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary">Systemic Interpretation</span>
+            {/* Per-Section Systemic Interpretation Card */}
+            <div className="bg-secondary/5 rounded-3xl border border-secondary/20 p-6 relative overflow-hidden group">
+              <div className="absolute -right-4 -top-4 opacity-[0.03] group-hover:rotate-12 transition-transform">
+                <Layers className="w-24 h-24" />
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed font-medium italic">
-                {section.interpretation}
-              </p>
+              <div className="relative space-y-3">
+                <div className="flex items-center gap-2">
+                  <Info className="w-3.5 h-3.5 text-secondary" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary">Institutional Lens</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed font-medium italic">
+                  {section.interpretation}
+                </p>
+                <div className="pt-2 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Market Regime: {getSentimentScore() > 50 ? 'EXPANSION' : 'CONTRACTION'}</span>
+                </div>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="bg-secondary/10 border-2 border-secondary/20 rounded-[2.5rem] p-8 space-y-6 mt-6">
+      <div className="bg-muted/10 border border-border/60 rounded-[2.5rem] p-8 space-y-6 mt-6">
         <div className="flex items-center gap-3">
-          <Layers className="w-6 h-6 text-secondary" />
+          <Zap className="w-6 h-6 text-secondary" />
           <h3 className="text-sm font-black uppercase tracking-widest text-white">Aggregated Intelligence Summary</h3>
         </div>
         <div className="space-y-4">
           <p className="text-xs leading-relaxed text-muted-foreground font-medium">
-            The current global regime is characterized by <strong className="text-white">fragmented liquidity</strong>. While Indian and US benchmarks show relative stability, the extreme bearish signals in Commodities like Natural Gas and Asian indices suggest that the "Risk-Off" sentiment is currently migrating toward emerging markets and energy cycles.
+            The global macro framework is currently navigating a <strong className="text-white">fragmented liquidity regime</strong>. While US tech and Indian financials show resilience, the crash-level signals in commodities like Natural Gas suggest underlying industrial cooling. The divergence between BTC's range-bound behavior and Hang Seng's collapse points to localized systemic stress rather than a global contagion event at this stage.
           </p>
-          <div className="pt-4 flex flex-col gap-3">
-            <div className="flex items-center gap-3 bg-background/50 p-3 rounded-xl border border-white/5">
-              <div className="w-2 h-2 rounded-full bg-risk-low animate-pulse" />
-              <span className="text-[11px] font-bold text-white">Dominant Theme: Sector Rotation into Financials (India)</span>
+          <div className="pt-4 grid grid-cols-1 gap-3">
+            <div className="flex items-center justify-between bg-background/50 p-4 rounded-2xl border border-white/5 group hover:border-secondary/30 transition-all">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-risk-low animate-pulse" />
+                <span className="text-[11px] font-bold text-white">Stability Zone: Domestic Credit (India)</span>
+              </div>
+              <ArrowRight className="w-3 h-3 text-muted-foreground group-hover:text-secondary transition-colors" />
             </div>
-            <div className="flex items-center gap-3 bg-background/50 p-3 rounded-xl border border-white/5">
-              <div className="w-2 h-2 rounded-full bg-risk-high animate-pulse" />
-              <span className="text-[11px] font-bold text-white">Danger Zone: Commodity Deflation (Industrial Sinks)</span>
+            <div className="flex items-center justify-between bg-background/50 p-4 rounded-2xl border border-white/5 group hover:border-secondary/30 transition-all">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-risk-high animate-pulse" />
+                <span className="text-[11px] font-bold text-white">Pressure Zone: Commodity Deflation</span>
+              </div>
+              <ArrowRight className="w-3 h-3 text-muted-foreground group-hover:text-secondary transition-colors" />
             </div>
           </div>
         </div>
       </div>
 
       <footer className="mt-8 px-2 text-center opacity-40">
-        <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-[0.4em]">Institutional Intelligence • Quantitative Analysis Only</p>
+        <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-[0.4em]">Proprietary Data Model • No Investment Advice</p>
       </footer>
     </div>
   );
