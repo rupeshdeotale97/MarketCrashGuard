@@ -1,76 +1,79 @@
-'use server';
+// src/ai/flows/analyze-statement-flow.ts
+
 /**
- * @fileOverview AI flow to analyze financial statements (CSV/Text).
- * 
- * - analyzeStatement: Extracts portfolio allocation percentages from statement text.
- * 
- * Uses Genkit 1.x defineFlow pattern.
+ * This is the primary analysis function that processes the extracted text 
+ * from a financial statement. It uses a set of predefined rules to categorize 
+ * assets and calculate the total portfolio value.
+ *
+ * @param statementText The full text content extracted from the PDF.
+ * @returns An object containing the categorized portfolio values and the total value.
  */
+export async function analyzeStatement(statementText: string) {
+    const lines = statementText.split('\n');
 
-import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+    const portfolio = {
+        Equity: 0,
+        'Debt/Bonds': 0,
+        Commodity: 0,
+        Crypto: 0,
+        Cash: 0,
+        Others: 0,
+    };
 
-const AnalyzeStatementInputSchema = z.object({
-  fileContent: z
-    .string()
-    .describe(
-      "The raw text content extracted from a financial statement (CSV or exported text)."
-    ),
-  password: z
-    .string()
-    .optional()
-    .describe("The password used to unlock the file if it was protected."),
-});
+    // --- Asset Categorization Rules ---
+    portfolio.Equity = extractValue(lines, ['equity', 'stock', 'shares', 'nifty', 'sensex']);
+    portfolio['Debt/Bonds'] = extractValue(lines, ['bond', 'debt', 'fixed income', 'debenture', 'fd']);
+    portfolio.Commodity = extractValue(lines, ['gold etf', 'sgb', 'silver', 'commodity']);
+    portfolio.Crypto = extractValue(lines, ['bitcoin', 'ethereum', 'crypto']);
+    portfolio.Cash = extractValue(lines, ['cash', 'bank balance', 'savings account']);
+    portfolio.Others = extractValue(lines, ['reit', 'invit', 'pms', 'aif', 'other']);
 
-const AnalyzeStatementOutputSchema = z.object({
-  equity: z.number().describe('Percentage allocated to Equities (0-100).'),
-  debt: z.number().describe('Percentage allocated to Debt/Bonds (0-100).'),
-  crypto: z.number().describe('Percentage allocated to Crypto Assets (0-100).'),
-  cash: z.number().describe('Percentage allocated to Cash/Liquidity (0-100).'),
-  confidence: z.number().describe('Confidence score of the extraction (0-1).'),
-});
+    // --- Total Value Calculation ---
+    const totalValue = Object.values(portfolio).reduce((sum, value) => sum + value, 0);
 
-export type AnalyzeStatementOutput = z.infer<typeof AnalyzeStatementOutputSchema>;
+    // --- Percentage Calculation (Normalized) ---
+    const normalizedPortfolio: { [key: string]: number } = {};
+    if (totalValue > 0) {
+        for (const key in portfolio) {
+            normalizedPortfolio[key] = (portfolio[key as keyof typeof portfolio] / totalValue) * 100;
+        }
+    }
 
-const analyzeStatementFlow = ai.defineFlow(
-  {
-    name: 'analyzeStatementFlow',
-    inputSchema: AnalyzeStatementInputSchema,
-    outputSchema: AnalyzeStatementOutputSchema,
-  },
-  async (input) => {
-    const { output } = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
-      output: { schema: AnalyzeStatementOutputSchema },
-      prompt: `You are a professional financial data analyst. Your goal is to extract asset allocation percentages from the provided statement data.
-      
-      Note: The file content might be raw text from a CSV or Excel export. 
-      If a password was provided ({{{password}}}), it indicates the file was previously protected.
-      
-      Analyze the text content for:
-      - Equity/Stocks/Mutual Funds (Equity)
-      - Debt/Bonds/Fixed Income (Debt)
-      - Cryptocurrency/Digital Assets (Crypto)
-      - Cash/Bank Balance/Liquidity (Cash)
-      
-      Guidelines:
-      1. Map detected assets to the closest category.
-      2. Ensure the total percentage is exactly 100%.
-      3. Estimate based on market values if percentages aren't explicit.
-      
-      Statement Data:
-      {{{fileContent}}}`,
-      input: { 
-        fileContent: input.fileContent,
-        password: input.password || "None provided"
-      },
-    });
+    return {
+        ...normalizedPortfolio,
+        TotalPortfolioValue: totalValue,
+    };
+}
 
-    if (!output) throw new Error('Failed to parse statement content.');
-    return output;
-  }
-);
 
-export async function analyzeStatement(fileContent: string, password?: string): Promise<AnalyzeStatementOutput> {
-  return analyzeStatementFlow({ fileContent, password });
+/**
+ * A helper function to scan through lines of text and extract the first
+ * monetary value found on a line that contains any of the given keywords.
+ *
+ * This function uses a more robust regex to handle various number formats.
+ *
+ * @param lines An array of strings, where each string is a line from the statement.
+ * @param keywords An array of keywords to search for (case-insensitive).
+ * @returns The extracted numerical value, or 0 if no match is found.
+ */
+function extractValue(lines: string[], keywords: string[]): number {
+    for (const line of lines) {
+        const lowerLine = line.toLowerCase();
+
+        if (keywords.some(keyword => lowerLine.includes(keyword))) {
+            
+            // Improved Regex: Handles integers, decimals, and comma-separators.
+            // It looks for a number preceded by a space, colon, or Rupee symbol.
+            const valueMatch = lowerLine.match(/(?:[\s:₹]|^)([\d,]*\.?[\d]+)/);
+            
+            if (valueMatch && valueMatch[1]) {
+                const numericString = valueMatch[1].replace(/,/g, '');
+                const value = parseFloat(numericString);
+                if (!isNaN(value)) {
+                    return value;
+                }
+            }
+        }
+    }
+    return 0; // Return 0 if no value is found
 }
