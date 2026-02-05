@@ -9,6 +9,8 @@ export interface MarketRiskData {
   globalRisk: SystemStatus;
   riskJumpDay: boolean;
   crashConfirmed: boolean;
+  earlyWarning: boolean;
+  protectionScore: number;
   action: string[];
   factors: {
     creditStress: boolean;
@@ -19,3 +21,4 @@ export interface MarketRiskData {
 }
 
 export type UserMode = 'Investor' | 'Trader';
+export type ExposureStatus = 'BALANCED' | 'OVEREXPOSED' | 'DEFENSIVE';
