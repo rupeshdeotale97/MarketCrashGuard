@@ -15,7 +15,9 @@ import {
   MousePointer2,
   Flag,
   LineChart,
-  ArrowRight
+  ArrowRight,
+  TrendingUp,
+  Coins
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -40,7 +42,6 @@ import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 export default function ChecklistPage() {
   const baseData = getDailyRiskData();
   
-  // Initialize with mock data for instant rendering
   const [isMounted, setIsMounted] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [cryptoData, setCryptoData] = useState<any[]>([
@@ -151,49 +152,85 @@ export default function ChecklistPage() {
   const liquidityShock = liveMetrics.volume24h < 15;
   const crashConfirmed = baseData.factors.creditStress || volatilitySpike || liquidityShock || baseData.factors.externalShock;
 
-  const checklistItems = [
-    { 
-      label: "Systemic Credit Stress", 
-      value: baseData.factors.creditStress, 
-      desc: "Interbank counterparty risk & bond spreads.", 
-      trigger: "> 300bps TED Spread" 
+  const groupedChecklist = [
+    {
+      title: "Global Systemic",
+      icon: <Globe className="w-4 h-4 text-blue-500" />,
+      items: [
+        { 
+          label: "Systemic Credit Stress", 
+          value: baseData.factors.creditStress, 
+          desc: "Interbank counterparty risk & bond spreads.", 
+          trigger: "> 300bps TED Spread" 
+        },
+        { 
+          label: "Dollar Wrecking Ball", 
+          value: false, 
+          desc: "DXY strength draining global risk liquidity.", 
+          trigger: "DXY > 105.00" 
+        },
+        { 
+          label: "Yield Curve Inversion", 
+          value: true, 
+          desc: "Recessionary signal from bond market.", 
+          trigger: "10Y-2Y < -0.5%" 
+        },
+        { 
+          label: "External Macro Shock", 
+          value: baseData.factors.externalShock, 
+          desc: "Geopolitical events or central bank pivots.", 
+          trigger: "Manual Protocol IV" 
+        },
+      ]
     },
-    { 
-      label: "Volatility Implosion", 
-      value: volatilitySpike, 
-      desc: "VIX spikes or extreme asset price deviation.", 
-      trigger: "> 35 VIX / 5% BTC" 
+    {
+      title: "Indian Market",
+      icon: <Flag className="w-4 h-4 text-orange-500" />,
+      items: [
+        { 
+          label: "NIFTY Volatility Spike", 
+          value: liveMetrics.niftyChange < -2, 
+          desc: "Extreme daily deviation in domestic benchmarks.", 
+          trigger: "Daily Fall > 2%" 
+        },
+        { 
+          label: "FII Liquidity Drain", 
+          value: false, 
+          desc: "Foreign Institutional Investors heavy selling.", 
+          trigger: "> ₹5,000Cr Sell" 
+        },
+        { 
+          label: "INR Devaluation", 
+          value: false, 
+          desc: "Sudden weakness in Rupee against USD.", 
+          trigger: "USD/INR > 84.50" 
+        },
+      ]
     },
-    { 
-      label: "Liquidity Evaporation", 
-      value: liquidityShock, 
-      desc: "Order book depth & trading volume dry up.", 
-      trigger: "< $15B BTC Volume" 
-    },
-    { 
-      label: "Dollar Wrecking Ball", 
-      value: false, 
-      desc: "DXY strength draining global risk liquidity.", 
-      trigger: "DXY > 105.00" 
-    },
-    { 
-      label: "Yield Curve Inversion", 
-      value: true, 
-      desc: "Recessionary signal from bond market.", 
-      trigger: "10Y-2Y < -0.5%" 
-    },
-    { 
-      label: "Recursive Leverage", 
-      value: false, 
-      desc: "Extreme on-chain or margin debt buildup.", 
-      trigger: "> 1.0 Funding Rate" 
-    },
-    { 
-      label: "External Macro Shock", 
-      value: baseData.factors.externalShock, 
-      desc: "Geopolitical events or central bank pivots.", 
-      trigger: "Manual Protocol IV" 
-    },
+    {
+      title: "Crypto Index",
+      icon: <Coins className="w-4 h-4 text-secondary" />,
+      items: [
+        { 
+          label: "Volatility Implosion", 
+          value: volatilitySpike, 
+          desc: "Extreme price deviation in BTC/ETH.", 
+          trigger: "> 5% Daily move" 
+        },
+        { 
+          label: "Liquidity Evaporation", 
+          value: liquidityShock, 
+          desc: "Order book depth & trading volume dry up.", 
+          trigger: "< $15B BTC Volume" 
+        },
+        { 
+          label: "Recursive Leverage", 
+          value: false, 
+          desc: "Extreme on-chain or margin debt buildup.", 
+          trigger: "> 1.0 Funding Rate" 
+        },
+      ]
+    }
   ];
 
   const chartConfig = {
@@ -303,38 +340,52 @@ export default function ChecklistPage() {
         </div>
       </div>
 
-      {/* Checklist Items */}
-      <div className="bg-card rounded-3xl border border-border overflow-hidden">
-        <div className="px-6 py-4 bg-muted/20 border-b border-border flex justify-between items-center">
-          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Conditions Evaluated</span>
-          <MousePointer2 className="w-3 h-3 text-muted-foreground/40" />
+      {/* Grouped Checklist */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 px-1">
+          <TrendingUp className="w-4 h-4 text-muted-foreground" />
+          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Conditions Evaluated</h3>
         </div>
-        <div className="divide-y divide-border">
-          {checklistItems.map((item, i) => (
-            <div key={i} className="px-6 py-5 flex items-center justify-between group transition-all hover:bg-muted/10">
-              <div className="flex flex-col gap-0.5 max-w-[75%]">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-[15px] leading-tight text-white">{item.label}</span>
-                  <Badge variant="outline" className="text-[8px] font-black h-4 py-0 border-white/10 text-muted-foreground/60 uppercase tracking-tighter shrink-0">{item.trigger}</Badge>
-                </div>
-                <span className="text-[11px] text-muted-foreground font-medium leading-tight">{item.desc}</span>
+
+        {groupedChecklist.map((group, groupIdx) => (
+          <div key={groupIdx} className="bg-card rounded-[2rem] border border-border overflow-hidden shadow-xl">
+            <div className="px-6 py-4 bg-muted/20 border-b border-border flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                {group.icon}
+                <span className="text-xs font-black uppercase tracking-widest text-white">{group.title}</span>
               </div>
-              <div className="shrink-0 ml-4">
-                {item.value ? (
-                  <div className="relative">
-                    <XCircle className="w-7 h-7 text-risk-crash" />
-                    <div className="absolute inset-0 animate-ping rounded-full bg-risk-crash/20" />
-                  </div>
-                ) : (
-                  <CheckCircle2 className="w-7 h-7 text-risk-low opacity-30 group-hover:opacity-100 transition-opacity" />
-                )}
-              </div>
+              <Badge variant="outline" className="text-[8px] border-white/5 text-muted-foreground/50">
+                {group.items.length} FACTORS
+              </Badge>
             </div>
-          ))}
-        </div>
+            <div className="divide-y divide-border">
+              {group.items.map((item, i) => (
+                <div key={i} className="px-6 py-5 flex items-center justify-between group transition-all hover:bg-muted/10">
+                  <div className="flex flex-col gap-0.5 max-w-[75%]">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-[14px] leading-tight text-white">{item.label}</span>
+                      <Badge variant="outline" className="text-[8px] font-black h-4 py-0 border-white/10 text-muted-foreground/60 uppercase tracking-tighter shrink-0">{item.trigger}</Badge>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground font-medium leading-tight">{item.desc}</span>
+                  </div>
+                  <div className="shrink-0 ml-4">
+                    {item.value ? (
+                      <div className="relative">
+                        <XCircle className="w-7 h-7 text-risk-crash" />
+                        <div className="absolute inset-0 animate-ping rounded-full bg-risk-crash/20" />
+                      </div>
+                    ) : (
+                      <CheckCircle2 className="w-7 h-7 text-risk-low opacity-30 group-hover:opacity-100 transition-opacity" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Live Indicator Details */}
+      {/* Live Indicator Details (Accordion) */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2 px-1">
           <TrendingDown className="w-4 h-4 text-muted-foreground" />
