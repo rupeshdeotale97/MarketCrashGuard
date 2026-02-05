@@ -3,14 +3,11 @@
 
 import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { User, Bell, ShieldAlert, ExternalLink, Heart, Check, Coffee, Star, Loader2, Shield } from 'lucide-react';
+import { User, Bell, ShieldAlert, Heart, Coffee, Star, Loader2, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,21 +30,16 @@ export default function SettingsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Supporter status
     const supporterStatus = localStorage.getItem('crashguard_supporter');
     if (supporterStatus === 'true') {
       setIsSupporter(true);
     }
     
-    // Notification preference
     const notificationPref = localStorage.getItem('crashguard_notifications');
-    if (notificationPref === 'true' && typeof window !== 'undefined' && "Notification" in window) {
-      if (Notification.permission === "granted") {
-        setNotifications(true);
-      }
+    if (notificationPref === 'true') {
+      setNotifications(true);
     }
 
-    // Mode preference
     const modePref = localStorage.getItem('crashguard_mode');
     if (modePref === 'trader') {
       setIsTrader(true);
@@ -63,66 +55,13 @@ export default function SettingsPage() {
     });
   };
 
-  const handleNotificationToggle = async (checked: boolean) => {
-    if (!checked) {
-      setNotifications(false);
-      localStorage.setItem('crashguard_notifications', 'false');
-      toast({
-        title: "Notifications Disabled",
-      });
-      return;
-    }
-
-    if (typeof window === 'undefined' || !("Notification" in window)) {
-      toast({
-        variant: "destructive",
-        title: "Not Supported",
-        description: "This browser does not support notifications.",
-      });
-      return;
-    }
-
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission === "granted") {
-        setNotifications(true);
-        localStorage.setItem('crashguard_notifications', 'true');
-        toast({
-          title: "Notifications Enabled",
-          description: "You will now receive real-time risk alerts.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Permission Denied",
-          description: "Enable notifications in browser settings.",
-        });
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not request notification permission.",
-      });
-    }
-  };
-
-  const sendTestNotification = () => {
-    if (typeof window !== 'undefined' && "Notification" in window && Notification.permission === "granted") {
-      new Notification("CrashGuard Alert", {
-        body: "Test notification: System status is currently STABLE.",
-      });
-      toast({
-        title: "Test Sent",
-        description: "A system notification has been triggered.",
-      });
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Permission not granted.",
-      });
-    }
+  const handleNotificationToggle = (checked: boolean) => {
+    setNotifications(checked);
+    localStorage.setItem('crashguard_notifications', checked ? 'true' : 'false');
+    toast({
+      title: checked ? "Notifications Enabled" : "Notifications Disabled",
+      description: checked ? "You will receive real-time risk alerts." : "Alerts have been silenced.",
+    });
   };
 
   const handleDonateInitiate = (amount: string) => {
@@ -133,38 +72,31 @@ export default function SettingsPage() {
   const confirmDonation = async () => {
     setIsProcessing(true);
     
-    try {
-      // Log the support intent to Firestore
-      await addDoc(collection(db, "donations"), {
-        amount: selectedAmount,
-        timestamp: serverTimestamp(),
-        mode: isTrader ? 'Trader' : 'Investor',
-        status: 'INTENT'
-      });
+    // Simulate payment logging to local storage
+    const newEntry = {
+      id: Math.random().toString(36).substring(2, 15),
+      amount: selectedAmount,
+      timestamp: new Date().toISOString(),
+      mode: isTrader ? 'Trader' : 'Investor'
+    };
 
-      // Redirect to Razorpay
-      const razorpayLink = 'https://razorpay.me/@poojarupeshdeotale';
-      window.open(razorpayLink, '_blank');
-      
-      setTimeout(() => {
-        setIsSupporter(true);
-        localStorage.setItem('crashguard_supporter', 'true');
-        setIsProcessing(false);
-        setShowDonationDialog(false);
-        
-        toast({
-          title: "Support Logged",
-          description: "Thank you for your voluntary support!",
-        });
-      }, 1000);
-    } catch (e) {
+    const currentLedger = JSON.parse(localStorage.getItem('crashguard_ledger') || '[]');
+    localStorage.setItem('crashguard_ledger', JSON.stringify([newEntry, ...currentLedger]));
+
+    // Open link
+    window.open('https://razorpay.me/@poojarupeshdeotale', '_blank');
+    
+    setTimeout(() => {
+      setIsSupporter(true);
+      localStorage.setItem('crashguard_supporter', 'true');
       setIsProcessing(false);
+      setShowDonationDialog(false);
+      
       toast({
-        variant: "destructive",
-        title: "Connection Error",
-        description: "Could not log payment. Please check your network.",
+        title: "Support Logged",
+        description: "Thank you for your voluntary support!",
       });
-    }
+    }, 1500);
   };
 
   return (
@@ -220,16 +152,6 @@ export default function SettingsPage() {
               className="data-[state=checked]:bg-secondary"
             />
           </div>
-          {notifications && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full text-[10px] font-bold uppercase tracking-widest border-secondary/30 h-8"
-              onClick={sendTestNotification}
-            >
-              Send Test Notification
-            </Button>
-          )}
         </div>
       </div>
 
@@ -283,12 +205,6 @@ export default function SettingsPage() {
           <p className="text-[11px] leading-relaxed text-muted-foreground font-bold italic">
             This app does not provide investment advice. It is an informational risk-awareness tool only. Users are responsible for all financial decisions.
           </p>
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-col gap-3">
-        <div className="text-center pt-2">
-          <span className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.3em]">Version 1.2.0 • Build 92</span>
         </div>
       </div>
 

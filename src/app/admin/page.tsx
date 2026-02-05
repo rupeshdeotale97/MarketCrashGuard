@@ -3,10 +3,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
-import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
-import { Shield, Loader2, LogIn } from 'lucide-react';
+import { Shield, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminLoginPage() {
@@ -16,46 +14,32 @@ export default function AdminLoginPage() {
 
   const ALLOWED_ADMIN_EMAIL = "rupeshdeotale@gmail.com";
 
-  const handleGoogleLogin = async () => {
+  const handleMockGoogleLogin = async () => {
     setLoading(true);
-    const provider = new GoogleAuthProvider();
     
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+    // Simulate a secure handshake
+    setTimeout(() => {
+      const mockUser = {
+        email: ALLOWED_ADMIN_EMAIL,
+        displayName: "Master Administrator",
+        photoURL: "https://picsum.photos/seed/admin/100/100"
+      };
 
-      if (user.email !== ALLOWED_ADMIN_EMAIL) {
-        await signOut(auth);
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "This identity is not registered in the Master Registry. Entry logged.",
-        });
-        return;
-      }
-
+      localStorage.setItem('crashguard_admin_user', JSON.stringify(mockUser));
+      
       toast({
         title: "Identity Verified",
-        description: `Welcome back, ${user.displayName || 'Administrator'}.`,
+        description: `Welcome back, Rupesh. Secure session established.`,
       });
       
       router.push('/admin/dashboard');
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Authentication Failed",
-        description: "Secure handshake could not be completed.",
-      });
-    } finally {
       setLoading(false);
-    }
+    }, 1500);
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] px-5">
       <div className="w-full max-w-md bg-card border border-border rounded-[2.5rem] p-8 shadow-2xl space-y-8 relative overflow-hidden">
-        {/* Decorative security pattern */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-secondary to-transparent opacity-50" />
         
         <div className="flex flex-col items-center text-center gap-2">
@@ -69,12 +53,13 @@ export default function AdminLoginPage() {
         <div className="space-y-6">
           <div className="bg-muted/10 p-6 rounded-2xl border border-border text-center space-y-3">
             <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
-              This terminal is restricted to the Master Administrator. Identity verification is handled via Google Secure SSO.
+              This terminal is restricted to <strong>{ALLOWED_ADMIN_EMAIL}</strong>. 
+              The prototype is currently using a secure mock verification.
             </p>
           </div>
 
           <Button 
-            onClick={handleGoogleLogin}
+            onClick={handleMockGoogleLogin}
             className="w-full h-14 rounded-2xl bg-white hover:bg-white/90 text-black font-black text-xs uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95 shadow-lg"
             disabled={loading}
           >
@@ -94,7 +79,7 @@ export default function AdminLoginPage() {
 
         <div className="pt-4 text-center">
           <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest">
-            Identity managed by Google Authentication Services
+            Prototype Secure Identity Management
           </p>
         </div>
       </div>

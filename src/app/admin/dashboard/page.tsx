@@ -1,10 +1,8 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
-import { auth, db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { signOut } from 'firebase/auth';
 import { 
   TrendingUp, 
   Users, 
@@ -15,7 +13,8 @@ import {
   Search,
   ShieldCheck,
   Download,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,43 +29,25 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const ALLOWED_ADMIN_EMAIL = "rupeshdeotale@gmail.com";
-
   useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        router.push('/admin');
-      } else if (user.email !== ALLOWED_ADMIN_EMAIL) {
-        await signOut(auth);
-        toast({
-          variant: "destructive",
-          title: "Access Revoked",
-          description: "Unauthorized session detected.",
-        });
-        router.push('/admin');
-      } else {
-        setAuthenticated(true);
+    const userJson = localStorage.getItem('crashguard_admin_user');
+    if (!userJson) {
+      router.push('/admin');
+    } else {
+      setAuthenticated(true);
+      // Load payments from local storage
+      const localPayments = localStorage.getItem('crashguard_ledger');
+      if (localPayments) {
+        setPayments(JSON.parse(localPayments));
       }
-    });
-
-    return () => unsubscribeAuth();
-  }, [router, toast]);
-
-  useEffect(() => {
-    if (!authenticated) return;
-
-    const q = query(collection(db, "donations"), orderBy("timestamp", "desc"));
-    const unsubscribePayments = onSnapshot(q, (snapshot) => {
-      const p = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setPayments(p);
       setLoading(false);
-    }, (error) => {
-      console.error("Firestore error:", error);
-      setLoading(false);
-    });
+    }
+  }, [router]);
 
-    return () => unsubscribePayments();
-  }, [authenticated]);
+  const handleLogout = () => {
+    localStorage.removeItem('crashguard_admin_user');
+    router.push('/admin');
+  };
 
   const totalRevenue = payments.reduce((acc, curr) => {
     const amountStr = curr.amount?.replace(/[^0-9.]/g, '') || '0';
@@ -98,14 +79,14 @@ export default function AdminDashboard() {
             <h1 className="text-2xl font-black text-white leading-none">Ledger</h1>
             <span className="text-[10px] font-black text-secondary uppercase tracking-widest mt-1 flex items-center gap-1">
               <ShieldCheck className="w-3 h-3" />
-              Verified Session: {auth.currentUser?.email}
+              Verified Session: Rupesh
             </span>
           </div>
         </div>
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => signOut(auth)}
+          onClick={handleLogout}
           className="rounded-full text-risk-crash hover:bg-risk-crash/10 hover:text-risk-crash"
         >
           <LogOut className="w-5 h-5" />
@@ -128,6 +109,13 @@ export default function AdminDashboard() {
           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Events</p>
           <p className="text-3xl font-black text-white">{payments.length}</p>
         </div>
+      </div>
+
+      <div className="bg-secondary/10 p-4 rounded-2xl border border-secondary/20 flex items-start gap-3">
+        <AlertCircle className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          <strong>Prototype Mode:</strong> This ledger currently displays data stored in your local browser session. In production, this would sync to a centralized database.
+        </p>
       </div>
 
       {/* Filter & Actions */}
@@ -158,7 +146,7 @@ export default function AdminDashboard() {
                 <span className="text-sm font-bold text-white">{p.amount} Support</span>
                 <span className="text-[10px] text-muted-foreground flex items-center gap-1 font-medium">
                   <Clock className="w-3 h-3" />
-                  {p.timestamp?.toDate().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                  {new Date(p.timestamp).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                 </span>
               </div>
             </div>
