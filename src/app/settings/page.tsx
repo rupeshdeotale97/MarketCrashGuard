@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -20,20 +21,78 @@ import {
 
 export default function SettingsPage() {
   const [isTrader, setIsTrader] = useState(false);
-  const [notifications, setNotifications] = useState(true);
+  const [notifications, setNotifications] = useState(false);
   const [isSupporter, setIsSupporter] = useState(false);
   const [showDonationDialog, setShowDonationDialog] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
-  // Load supporter status from local storage
+  // Load preferences from local storage
   useEffect(() => {
     const supporterStatus = localStorage.getItem('crashguard_supporter');
     if (supporterStatus === 'true') {
       setIsSupporter(true);
     }
+    
+    const notificationPref = localStorage.getItem('crashguard_notifications');
+    if (notificationPref === 'true' && "Notification" in window && Notification.permission === "granted") {
+      setNotifications(true);
+    }
   }, []);
+
+  const handleNotificationToggle = async (checked: boolean) => {
+    if (checked) {
+      if (!("Notification" in window)) {
+        toast({
+          variant: "destructive",
+          title: "Not Supported",
+          description: "This browser does not support desktop notifications.",
+        });
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        setNotifications(true);
+        localStorage.setItem('crashguard_notifications', 'true');
+        toast({
+          title: "Notifications Enabled",
+          description: "You will now receive real-time risk alerts.",
+        });
+      } else {
+        setNotifications(false);
+        localStorage.setItem('crashguard_notifications', 'false');
+        toast({
+          variant: "destructive",
+          title: "Permission Denied",
+          description: "Please enable notifications in your browser settings to receive alerts.",
+        });
+      }
+    } else {
+      setNotifications(false);
+      localStorage.setItem('crashguard_notifications', 'false');
+    }
+  };
+
+  const sendTestNotification = () => {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("CrashGuard Alert", {
+        body: "Test notification: System status is currently STABLE.",
+        icon: "/favicon.ico",
+      });
+      toast({
+        title: "Test Sent",
+        description: "A system notification has been triggered.",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Notification permission is not granted.",
+      });
+    }
+  };
 
   const handleDonateInitiate = (amount: string) => {
     setSelectedAmount(amount);
@@ -42,16 +101,9 @@ export default function SettingsPage() {
 
   const confirmDonation = () => {
     setIsProcessing(true);
-
-    // RAZORPAY INTEGRATION:
-    // Opening the user's specific Razorpay payment page link.
     const razorpayLink = 'https://razorpay.me/@poojarupeshdeotale';
-    
-    // Open in new tab
     window.open(razorpayLink, '_blank');
     
-    // For prototype/feedback purposes, we simulate the success state 
-    // after the user is redirected to the payment page.
     setTimeout(() => {
       setIsSupporter(true);
       localStorage.setItem('crashguard_supporter', 'true');
@@ -60,7 +112,7 @@ export default function SettingsPage() {
       
       toast({
         title: "Redirected to Razorpay",
-        description: "The payment page has been opened in a new tab. Thank you for your voluntary support!",
+        description: "Thank you for your voluntary support!",
       });
     }, 1200);
   };
@@ -96,21 +148,33 @@ export default function SettingsPage() {
           />
         </div>
 
-        <div className="px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-secondary/10 rounded-xl text-secondary">
-              <Bell className="w-5 h-5" />
+        <div className="px-6 py-5 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-secondary/10 rounded-xl text-secondary">
+                <Bell className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-semibold">Risk Alerts</span>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Push Notifications</span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="font-semibold">Risk Alerts</span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Push Notifications</span>
-            </div>
+            <Switch 
+              checked={notifications} 
+              onCheckedChange={handleNotificationToggle}
+              className="data-[state=checked]:bg-secondary"
+            />
           </div>
-          <Switch 
-            checked={notifications} 
-            onCheckedChange={setNotifications}
-            className="data-[state=checked]:bg-secondary"
-          />
+          {notifications && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full text-[10px] font-bold uppercase tracking-widest border-secondary/30 h-8"
+              onClick={sendTestNotification}
+            >
+              Send Test Notification
+            </Button>
+          )}
         </div>
       </div>
 
@@ -122,7 +186,7 @@ export default function SettingsPage() {
         </div>
         <div className="bg-gradient-to-br from-secondary/10 to-transparent rounded-[2rem] p-6 border border-secondary/20 space-y-5">
           <p className="text-xs leading-relaxed text-muted-foreground font-medium">
-            CrashGuard is built to reduce panic and protect capital — not to sell trades or fear. If this app helps you stay disciplined, you can support ongoing development.
+            CrashGuard is built to reduce panic and protect capital. If this app helps you stay disciplined, you can support ongoing development.
           </p>
           
           {isSupporter ? (
@@ -150,10 +214,6 @@ export default function SettingsPage() {
               <Button variant="outline" className="rounded-xl font-bold h-12 text-xs border-secondary/30 hover:bg-secondary/10" onClick={() => handleDonateInitiate("$10+")}>$10+</Button>
             </div>
           )}
-          
-          <p className="text-[9px] text-center text-muted-foreground font-bold uppercase tracking-widest opacity-60">
-            Powered by Razorpay • Voluntary Support
-          </p>
         </div>
       </div>
 
@@ -170,18 +230,13 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* About Section */}
       <div className="mt-4 flex flex-col gap-3">
         <button className="flex items-center justify-between w-full px-6 py-4 bg-muted/20 hover:bg-muted/40 rounded-2xl border border-border transition-colors group">
           <span className="font-bold text-xs uppercase tracking-widest">Privacy Policy</span>
           <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-white" />
         </button>
-        <button className="flex items-center justify-between w-full px-6 py-4 bg-muted/20 hover:bg-muted/40 rounded-2xl border border-border transition-colors group">
-          <span className="font-bold text-xs uppercase tracking-widest">Terms of Service</span>
-          <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-white" />
-        </button>
         <div className="text-center pt-2">
-          <span className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.3em]">Version 1.2.0 • Build 89</span>
+          <span className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.3em]">Version 1.2.0 • Build 92</span>
         </div>
       </div>
 
@@ -189,13 +244,12 @@ export default function SettingsPage() {
       <AlertDialog open={showDonationDialog} onOpenChange={setShowDonationDialog}>
         <AlertDialogContent className="rounded-[2rem] border-secondary/20">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-center">Support CrashGuard Development</AlertDialogTitle>
+            <AlertDialogTitle className="text-center">Support CrashGuard</AlertDialogTitle>
             <AlertDialogDescription className="text-center text-xs leading-relaxed">
-              You are about to contribute <span className="font-bold text-white">{selectedAmount}</span>. 
-              Contributions are voluntary and keep the app independent. 
+              You are about to contribute <span className="font-bold text-white">{selectedAmount}</span>.
               <br/><br/>
               <span className="text-[10px] uppercase font-bold tracking-widest text-secondary">Secure Payment:</span>
-              This transaction is handled securely via our official Razorpay page.
+              Redirecting to Razorpay...
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-col gap-2">
@@ -210,7 +264,7 @@ export default function SettingsPage() {
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Opening Razorpay...
+                  Redirecting...
                 </>
               ) : (
                 `Support with ${selectedAmount}`
