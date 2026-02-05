@@ -64,47 +64,6 @@ function Calendar({
         day_hidden: "invisible",
         ...classNames,
       }}
-      components={{
-        Dropdown: (
-          props: DropdownProps 
-        ) => {
-          const handleValueChange = (newValue: string) => {
-            if (props.name === "months") {
-              const month = props.options?.find(option => String(option.props.value) === newValue);
-              if(month) props.onChange?.(month.props.value as unknown as React.ChangeEvent<HTMLSelectElement>);
-            } else if (props.name === "years") {
-              const year = props.options?.find(option => String(option.props.value) === newValue);
-              if(year) props.onChange?.(year.props.value as unknown as React.ChangeEvent<HTMLSelectElement>)
-            }
-          };
-
-          return (
-            <Select
-              value={String(props.value)}
-              onValueChange={handleValueChange}
-            >
-              <SelectTrigger className={cn(buttonVariants({ variant: "ghost" }), "h-auto font-semibold")}>
-                <SelectValue>{props.caption}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <ScrollArea className="h-80">
-                  {props.children &&
-                    React.Children.map(props.children, (child) => (
-                      <SelectItem
-                        value={String((child as React.ReactElement).props.value)}
-                        className="min-w-[var(--radix-select-trigger-width)]"
-                      >
-                        {(child as React.ReactElement).props.children}
-                      </SelectItem>
-                    ))}
-                </ScrollArea>
-              </SelectContent>
-            </Select>
-          )
-        },
-        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
-      }}
       {...props}
     />
   )
