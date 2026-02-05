@@ -1,20 +1,20 @@
-import { MetadataRoute } from "next";
-
+import { MetadataRoute } from 'next'
+ 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Your App Name",
-    short_name: "App Name",
-    description: "Your app description",
-    start_url: "/",
-    display: "standalone",
-    background_color: "#fff",
-    theme_color: "#fff",
+    name: 'Guard Market Crash',
+    short_name: 'GMC',
+    description: 'Institutional grade data and analysis to protect you from market crashes.',
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#000',
+    theme_color: '#000',
     icons: [
       {
-        src: "/favicon.ico",
-        sizes: "any",
-        type: "image/x-icon",
+        src: '/favicon.ico',
+        sizes: 'any',
+        type: 'image/x-icon',
       },
     ],
-  };
+  }
 }

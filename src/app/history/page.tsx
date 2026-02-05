@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Calendar, 
   History, 
@@ -21,7 +21,10 @@ import {
   ArrowUpRight,
   ShieldCheck,
   TrendingUp as TrendUpIcon,
-  Skull
+  Skull,
+  Thermometer,
+  Banknote,
+  Gauge
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -126,7 +129,27 @@ const bennerCycleData = [
 export default function HistoryPage() {
   const [view, setView] = useState<'replay' | 'benner'>('replay');
   const [activeYear, setActiveYear] = useState<'2008' | '2020' | '2022'>('2008');
+  const [marketData, setMarketData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const history = historicalIntelligence[activeYear];
+
+  useEffect(() => {
+    async function fetchMarketData() {
+      try {
+        const response = await fetch('/api/market-sentiments');
+        const data = await response.json();
+        setMarketData(data);
+      } catch (error) {
+        console.error("Failed to fetch market data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (view === 'benner') {
+      fetchMarketData();
+    }
+  }, [view]);
 
   const chartConfig = {
     level: {
@@ -331,6 +354,40 @@ export default function HistoryPage() {
               </div>
             </div>
           </div>
+          
+          <div className="bg-card border border-border rounded-[2rem] p-7 space-y-6">
+             <div className="flex items-center gap-3">
+              <Zap className="w-5 h-5 text-secondary" />
+              <h3 className="text-xs font-black uppercase tracking-widest text-white">Real-time Indicators</h3>
+            </div>
+            {loading ? (
+              <div className="flex justify-center items-center h-24">
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              </div>
+            ) : marketData ? (
+              <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center">
+                      <Thermometer className="w-5 h-5 mx-auto text-risk-high" />
+                      <p className="text-sm font-bold mt-1">{marketData.inflation}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase font-bold">Inflation</p>
+                  </div>
+                  <div className="text-center">
+                      <Banknote className="w-5 h-5 mx-auto text-risk-low" />
+                      <p className="text-sm font-bold mt-1">{marketData.creditSpreads}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase font-bold">Credit Spreads</p>
+                  </div>
+                  <div className="text-center">
+                      <Gauge className="w-5 h-5 mx-auto text-risk-elevated" />
+                      <p className="text-sm font-bold mt-1">{marketData.sentiment}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase font-bold">{marketData.sentimentLabel}</p>
+                  </div>
+              </div>
+            ) : (
+              <div className="flex justify-center items-center h-24">
+                <p className="text-sm text-muted-foreground">Failed to load data.</p>
+              </div>
+            )}
+          </div>
 
           <div className="bg-secondary/10 border border-secondary/20 rounded-[2rem] p-7 space-y-6">
              <div className="flex items-center gap-3">
@@ -346,7 +403,7 @@ export default function HistoryPage() {
                 </div>
                 <p className="text-xs font-bold text-white leading-tight">2024 - 2026 Prediction: The High Price Run</p>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  We are currently transitioning from the "Hard Times" bottom of 2022-2023. According to Benner, 2024-2025 is a period of industrial re-expansion. The cycle predicts a major "Series B" High Price peak in <strong className="text-white">Late 2026</strong>. This aligns with modern liquidity cycles following interest rate pivots.
+                  We are currently in a <strong className="text-white">recovery phase</strong>, transitioning from the "Hard Times" of 2022-23. Benner's cycle suggests a period of industrial re-expansion, leading to a <strong className="text-white">major "Series B" high in late 2026.</strong> This aligns with modern liquidity cycles following interest rate pivots, but is currently battling persistent inflation.
                 </p>
               </div>
 
