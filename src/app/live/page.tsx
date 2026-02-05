@@ -18,6 +18,7 @@ import { Progress } from "@/components/ui/progress";
 
 interface IndexData {
   name: string;
+  region?: string;
   price: string;
   change: number;
   type: 'global' | 'india' | 'crypto';
@@ -37,10 +38,24 @@ export default function LiveSignalsPage() {
       
       let cryptoData: IndexData[] = [];
       const mockGlobal: IndexData[] = [
-        { name: 'S&P 500', price: '5,021.40', change: -0.45 + (Math.random() * 0.2), type: 'global', signal: 'NEUTRAL' },
-        { name: 'NASDAQ 100', price: '17,890.10', change: -0.85 + (Math.random() * 0.4), type: 'global', signal: 'BEARISH' },
-        { name: 'NIFTY 50', price: '22,450.25', change: 0.32 + (Math.random() * 0.1), type: 'india', signal: 'BULLISH' },
-        { name: 'SENSEX', price: '73,890.15', change: 0.28 + (Math.random() * 0.1), type: 'india', signal: 'BULLISH' },
+        // US Markets
+        { name: 'S&P 500', region: 'US', price: '5,021.40', change: -0.45 + (Math.random() * 0.2), type: 'global', signal: 'NEUTRAL' },
+        { name: 'NASDAQ 100', region: 'US', price: '17,890.10', change: -0.85 + (Math.random() * 0.4), type: 'global', signal: 'BEARISH' },
+        { name: 'Dow Jones', region: 'US', price: '38,272.75', change: -0.12 + (Math.random() * 0.1), type: 'global', signal: 'NEUTRAL' },
+        
+        // European Markets
+        { name: 'FTSE 100', region: 'Europe', price: '7,624.10', change: 0.15 + (Math.random() * 0.2), type: 'global', signal: 'NEUTRAL' },
+        { name: 'DAX 40', region: 'Europe', price: '16,921.30', change: -0.55 + (Math.random() * 0.3), type: 'global', signal: 'BEARISH' },
+        { name: 'CAC 40', region: 'Europe', price: '7,592.20', change: -0.22 + (Math.random() * 0.2), type: 'global', signal: 'NEUTRAL' },
+
+        // Asian Markets
+        { name: 'Nikkei 225', region: 'Asia', price: '36,158.00', change: 1.12 + (Math.random() * 0.5), type: 'global', signal: 'BULLISH' },
+        { name: 'Hang Seng', region: 'Asia', price: '15,878.00', change: -2.34 + (Math.random() * 0.8), type: 'global', signal: 'CRASH' as any },
+        { name: 'Shanghai Comp', region: 'Asia', price: '2,829.70', change: -0.82 + (Math.random() * 0.4), type: 'global', signal: 'BEARISH' },
+
+        // Indian Markets
+        { name: 'NIFTY 50', region: 'India', price: '22,450.25', change: 0.32 + (Math.random() * 0.1), type: 'india', signal: 'BULLISH' },
+        { name: 'SENSEX', region: 'India', price: '73,890.15', change: 0.28 + (Math.random() * 0.1), type: 'india', signal: 'BULLISH' },
       ];
 
       try {
@@ -61,7 +76,6 @@ export default function LiveSignalsPage() {
           throw new Error("API Response Error");
         }
       } catch (error) {
-        // Fallback to mock crypto data if fetch fails
         cryptoData = [
           { name: 'BTC', price: '$64,250.00', change: -1.2, type: 'crypto', signal: 'BEARISH' },
           { name: 'ETH', price: '$3,450.20', change: -0.8, type: 'crypto', signal: 'NEUTRAL' },
@@ -167,10 +181,17 @@ export default function LiveSignalsPage() {
               <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">{section.title}</h3>
             </div>
             <div className="space-y-3">
-              {data.filter(d => d.type === section.type).map((item, i) => (
+              {data.filter(d => d.type === section.type as any).map((item, i) => (
                 <div key={i} className="bg-card border border-border rounded-2xl p-5 flex justify-between items-center group transition-all hover:border-secondary/30">
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm font-black text-white">{item.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black text-white">{item.name}</span>
+                      {item.region && (
+                        <Badge variant="outline" className="text-[8px] h-4 py-0 border-white/5 text-muted-foreground/60">
+                          {item.region}
+                        </Badge>
+                      )}
+                    </div>
                     <span className="text-lg font-mono font-bold text-white/90">{item.price}</span>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -204,8 +225,8 @@ export default function LiveSignalsPage() {
               <p className="text-xs font-bold text-white">Signal Status: {getSentimentScore() > 50 ? 'Constructive' : 'Defensive'}</p>
               <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
                 {getSentimentScore() > 50 
-                  ? "Market participation is broadening. Look for 'High-Yield' breakouts while keeping stops tight."
-                  : "Correlation is tightening towards the downside. Liquidity preservation is priority #1."}
+                  ? "Market participation is broadening across Asia and Europe. Look for US session confirmation."
+                  : "Global correlation is tightening towards the downside. Liquidity preservation is priority #1."}
               </p>
             </div>
           </div>
