@@ -1,43 +1,22 @@
-import { MetadataRoute } from 'next'
- 
+import { MetadataRoute } from "next";
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://crashguard.app'
+  const URL = "https://www.guardmarketcrash.com";
   return [
     {
-      url: baseUrl,
+      url: URL,
       lastModified: new Date(),
-      changeFrequency: 'daily',
       priority: 1,
     },
     {
-      url: `${baseUrl}/checklist`,
+      url: `${URL}/about`,
       lastModified: new Date(),
-      changeFrequency: 'always',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/live`,
-      lastModified: new Date(),
-      changeFrequency: 'always',
-      priority: 0.95,
-    },
-    {
-      url: `${baseUrl}/history`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/playbooks`,
+      url: `${URL}/contact`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
+      priority: 0.5,
     },
-    {
-      url: `${baseUrl}/scanner`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    },
-  ]
+  ];
 }
