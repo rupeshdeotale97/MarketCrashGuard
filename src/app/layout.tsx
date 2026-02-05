@@ -1,4 +1,4 @@
-import type {Metadata} from 'next';
+import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import {MobileNav} from '@/components/mobile-nav';
 import {Toaster} from '@/components/ui/toaster';
@@ -6,7 +6,24 @@ import {Toaster} from '@/components/ui/toaster';
 export const metadata: Metadata = {
   title: 'CrashGuard',
   description: 'Track global market crash risk with rule-based indicators.',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'CrashGuard',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#121212',
 };
 
 export default function RootLayout({
@@ -23,8 +40,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
-      <body className="font-body antialiased min-h-screen flex flex-col bg-background text-foreground">
-        <main className="flex-1 overflow-y-auto pb-24">
+      <body className="font-body antialiased min-h-screen flex flex-col bg-background text-foreground select-none">
+        <main className="flex-1 overflow-y-auto pb-24 safe-area-top">
           {children}
         </main>
         <MobileNav />
