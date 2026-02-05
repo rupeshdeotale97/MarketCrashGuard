@@ -1,6 +1,6 @@
+
 import { getDailyRiskData } from '@/lib/mock-data';
 import { RiskCard } from '@/components/risk-card';
-import { ActionButton } from '@/components/action-button';
 import { AlertCircle, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -12,8 +12,6 @@ export default function DashboardPage() {
     day: 'numeric',
     year: 'numeric'
   });
-
-  const riskFactorsSummary = `US Risk: ${data.usRisk}, India Risk: ${data.indiaRisk}, Crypto Risk: ${data.cryptoRisk}, Global Status: ${data.globalRisk}. Risk Jump Day: ${data.riskJumpDay ? 'YES' : 'NO'}.`;
 
   return (
     <div className="flex flex-col gap-6 px-5 pt-8">
@@ -55,9 +53,11 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Action Button */}
-      <div className="mt-2">
-        <ActionButton riskFactors={riskFactorsSummary} suggestedActions={data.action} />
+      {/* Dashboard Summary Footer */}
+      <div className="bg-card rounded-3xl p-6 border border-border">
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          The dashboard provides real-time rule-based alerts for market volatility and credit stress. Check the <span className="text-secondary font-semibold">Checklist</span> tab for detailed system shock analysis.
+        </p>
       </div>
 
       {/* Disclaimer Snippet */}
