@@ -1,119 +1,178 @@
 "use client";
 
-import { useState } from 'react';
-import { ShieldCheck, AlertTriangle, HelpCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ShieldCheck, AlertTriangle, HelpCircle, ArrowRight, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { ExposureStatus } from '@/lib/types';
-import { useToast } from '@/hooks/use-toast';
+import { getDailyRiskData } from '@/lib/mock-data';
+import { Badge } from "@/components/ui/badge";
+
+type AlignmentStatus = 'ALIGNED' | 'AGGRESSIVE' | 'DEFENSIVE';
 
 export default function ScannerPage() {
+  // STRICT PRIVACY: State only, no persistence
   const [equity, setEquity] = useState(50);
   const [debt, setDebt] = useState(30);
   const [crypto, setCrypto] = useState(10);
   const [cash, setCash] = useState(10);
   const [leverage, setLeverage] = useState(false);
-  const { toast } = useToast();
+  
+  const marketData = getDailyRiskData();
 
-  const calculateStatus = (): ExposureStatus => {
-    const riskExposure = equity + crypto;
-    if (leverage || riskExposure > 70) return 'OVEREXPOSED';
-    if (riskExposure < 30) return 'DEFENSIVE';
-    return 'BALANCED';
-  };
+  // Reset state on unmount or background (session only)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        setEquity(50); setDebt(30); setCrypto(10); setCash(10); setLeverage(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
 
-  const handleLeverageToggle = (checked: boolean) => {
-    setLeverage(checked);
-    if (checked) {
-      toast({
-        variant: "destructive",
-        title: "High Risk Warning",
-        description: "Leverage significantly increases liquidation risk.",
-      });
+  const calculateAlignment = (): AlignmentStatus => {
+    const highRiskExposure = equity + crypto;
+    const isHighRiskEnvironment = marketData.crashConfirmed || marketData.riskJumpDay || marketData.globalRisk === 'STRESSED';
+    
+    if (isHighRiskEnvironment) {
+      if (leverage || highRiskExposure > 30) return 'AGGRESSIVE';
+      if (highRiskExposure < 15) return 'DEFENSIVE';
+      return 'ALIGNED';
+    } else {
+      if (highRiskExposure > 75) return 'AGGRESSIVE';
+      if (highRiskExposure < 30) return 'DEFENSIVE';
+      return 'ALIGNED';
     }
   };
 
-  const status = calculateStatus();
+  const status = calculateAlignment();
   const total = equity + debt + crypto + cash;
 
+  const getSuggestions = () => {
+    const suggestions = [];
+    if (leverage) suggestions.push("Leverage tends to amplify losses during stress phases.");
+    if (equity + crypto > 60) suggestions.push("In elevated-risk environments, high equity exposure may increase volatility.");
+    if (cash < 20) suggestions.push("Higher cash buffers historically help during unstable periods.");
+    if (crypto > 15) suggestions.push("Crypto exposure behaves more aggressively during global risk events.");
+    if (marketData.crashConfirmed && status === 'AGGRESSIVE') suggestions.push("During confirmed crashes, capital preservation historically becomes the primary objective.");
+    
+    return suggestions.length > 0 ? suggestions : ["Your current allocation is within historical safety bounds for this regime."];
+  };
+
   return (
-    <div className="flex flex-col gap-6 px-5 pt-8 pb-12">
+    <div className="flex flex-col gap-6 px-5 pt-8 pb-12 animate-in fade-in duration-700">
       <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-white">Exposure Scanner</h1>
-        <p className="text-xs text-muted-foreground font-medium">Input your profile to evaluate risk exposure levels.</p>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest border-secondary/30 text-secondary">
+            Private Session
+          </Badge>
+        </div>
+        <h1 className="text-3xl font-black tracking-tight text-white mt-1">Portfolio Scanner</h1>
+        <p className="text-xs text-muted-foreground font-medium">Evaluate risk alignment with today's market regime.</p>
       </header>
 
-      {/* Result Card */}
+      {/* Evaluation Result */}
       <div className={cn(
-        "rounded-[2.5rem] p-8 flex flex-col items-center text-center border transition-all duration-700 shadow-2xl",
-        status === 'OVEREXPOSED' ? "bg-risk-crash/5 border-risk-crash/30" : 
-        status === 'DEFENSIVE' ? "bg-risk-low/5 border-risk-low/30" : 
-        "bg-secondary/5 border-secondary/30"
+        "rounded-[2.5rem] p-8 flex flex-col items-center text-center border transition-all duration-700 shadow-2xl relative overflow-hidden",
+        status === 'AGGRESSIVE' ? "bg-risk-crash/10 border-risk-crash/30" : 
+        status === 'DEFENSIVE' ? "bg-risk-low/10 border-risk-low/30" : 
+        "bg-secondary/10 border-secondary/30"
       )}>
         <div className={cn(
-          "p-5 rounded-full mb-4",
-          status === 'OVEREXPOSED' ? "bg-risk-crash/20 text-risk-crash" : 
+          "p-5 rounded-full mb-4 shadow-inner",
+          status === 'AGGRESSIVE' ? "bg-risk-crash/20 text-risk-crash" : 
           status === 'DEFENSIVE' ? "bg-risk-low/20 text-risk-low" : 
           "bg-secondary/20 text-secondary"
         )}>
-          {status === 'OVEREXPOSED' ? <AlertTriangle className="w-12 h-12" /> : <ShieldCheck className="w-12 h-12" />}
+          {status === 'AGGRESSIVE' ? <AlertTriangle className="w-12 h-12" /> : <ShieldCheck className="w-12 h-12" />}
         </div>
+        
         <h2 className={cn("text-2xl font-black uppercase tracking-tighter mb-1", 
-          status === 'OVEREXPOSED' ? "text-risk-crash" : 
+          status === 'AGGRESSIVE' ? "text-risk-crash" : 
           status === 'DEFENSIVE' ? "text-risk-low" : 
           "text-secondary"
         )}>
-          {status}
+          {status === 'ALIGNED' ? 'ALIGNED WITH MARKET' : `${status} FOR REGIME`}
         </h2>
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Calculated Profile</p>
+        
+        <div className="w-full max-w-[200px] h-1.5 bg-muted rounded-full mt-4 overflow-hidden flex">
+          <div className={cn("h-full", status === 'DEFENSIVE' ? 'w-1/3 bg-risk-low' : status === 'ALIGNED' ? 'w-2/3 bg-secondary' : 'w-full bg-risk-crash')} />
+        </div>
+        <div className="flex justify-between w-full max-w-[200px] mt-2 text-[8px] font-black uppercase text-muted-foreground tracking-widest">
+          <span>Defensive</span>
+          <span>Aggressive</span>
+        </div>
       </div>
 
-      {/* Input Form */}
-      <div className="bg-card rounded-[2rem] border border-border p-6 space-y-8">
-        <ScannerInput label="Equity exposure" value={equity} setValue={setEquity} />
-        <ScannerInput label="Debt / Fixed income" value={debt} setValue={setDebt} />
-        <ScannerInput label="Crypto exposure" value={crypto} setValue={setCrypto} />
-        <ScannerInput label="Cash reserves" value={cash} setValue={setCash} />
+      {/* Input Module */}
+      <div className="bg-card rounded-[2rem] border border-border p-8 space-y-8 shadow-xl">
+        <div className="space-y-6">
+          <AllocationInput label="Equity" value={equity} setValue={setEquity} />
+          <AllocationInput label="Debt / Bonds" value={debt} setValue={setDebt} />
+          <AllocationInput label="Crypto" value={crypto} setValue={setCrypto} />
+          <AllocationInput label="Cash" value={cash} setValue={setCash} />
+        </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-border">
+        <div className="flex items-center justify-between pt-6 border-t border-border">
           <div className="flex flex-col">
-            <span className="font-bold text-sm">Use Leverage?</span>
-            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Margin / Borrowed Funds</span>
+            <span className="font-bold text-sm text-white">Use Leverage?</span>
+            <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Margin / Borrowed</span>
           </div>
-          <Switch checked={leverage} onCheckedChange={handleLeverageToggle} />
+          <Switch checked={leverage} onCheckedChange={setLeverage} className="data-[state=checked]:bg-secondary" />
         </div>
 
         {total !== 100 && (
-          <p className="text-[10px] text-risk-high font-bold uppercase text-center animate-pulse">
-            Total Assets: {total}% (Must equal 100% for accuracy)
-          </p>
+          <div className="bg-risk-high/10 border border-risk-high/30 rounded-xl p-3 flex items-center gap-2 justify-center">
+            <Info className="w-3 h-3 text-risk-high" />
+            <p className="text-[10px] text-risk-high font-black uppercase tracking-widest">
+              Total: {total}% (Target 100%)
+            </p>
+          </div>
         )}
       </div>
 
-      <div className="bg-muted/10 rounded-2xl p-5 border border-border flex gap-3">
-        <HelpCircle className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
-        <p className="text-[10px] leading-relaxed text-muted-foreground font-medium italic">
-          Disclaimer: This is an informational risk-awareness tool only. We do not provide asset allocation or investment advice.
+      {/* Educational Suggestions */}
+      <div className="space-y-3">
+        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Considerations</h3>
+        <div className="space-y-2">
+          {getSuggestions().map((suggestion, i) => (
+            <div key={i} className="bg-muted/20 border border-border/60 rounded-2xl p-4 flex gap-3 items-start group hover:border-secondary/30 transition-all">
+              <div className="w-1.5 h-1.5 rounded-full bg-secondary mt-1.5 shrink-0" />
+              <p className="text-[11px] font-medium leading-relaxed text-muted-foreground group-hover:text-white transition-colors">
+                {suggestion}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-secondary/5 border border-dashed border-secondary/20 rounded-2xl p-5 mt-4">
+        <p className="text-[10px] leading-relaxed text-muted-foreground font-semibold italic text-center">
+          "This tool is educational only. It does not provide investment advice. Portfolio inputs are not saved or tracked."
         </p>
       </div>
+
+      <footer className="mt-4 pb-8 text-center opacity-30">
+        <p className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground">Local Session Intelligence • Private Protocol</p>
+      </footer>
     </div>
   );
 }
 
-function ScannerInput({ label, value, setValue }: { label: string, value: number, setValue: (v: number) => void }) {
+function AllocationInput({ label, value, setValue }: { label: string, value: number, setValue: (v: number) => void }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-end">
-        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{label}</span>
-        <span className="text-lg font-black text-white">{value}%</span>
+        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{label}</span>
+        <span className="text-xl font-black text-white">{value}%</span>
       </div>
       <Slider 
         value={[value]} 
         max={100} 
         step={5} 
         onValueChange={(v) => setValue(v[0])}
-        className={cn("cursor-pointer")}
+        className="cursor-pointer"
       />
     </div>
   );
