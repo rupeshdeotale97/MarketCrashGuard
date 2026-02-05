@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { getDailyRiskData } from '@/lib/mock-data';
 import { 
   CheckCircle2, 
@@ -8,7 +8,6 @@ import {
   AlertTriangle, 
   ShieldCheck, 
   Loader2, 
-  Info, 
   Activity, 
   Zap, 
   Globe,
@@ -32,11 +31,10 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
   Cell,
   ReferenceLine
 } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 export default function ChecklistPage() {
   const [loading, setLoading] = useState(true);
@@ -81,7 +79,6 @@ export default function ChecklistPage() {
             btcChange: parseFloat(btc?.changePercent24Hr || '0'),
             ethChange: parseFloat(eth?.changePercent24Hr || '0'),
             volume24h: parseFloat(btc?.volumeUsd24Hr || '0') / 1e9,
-            // Simulated sentiment proxies based on global crypto volatility
             indiaSentiment: 50 + (parseFloat(btc?.changePercent24Hr || '0') * 2), 
             globalSentiment: 45 + (parseFloat(btc?.changePercent24Hr || '0') * 1.5),
           });
@@ -102,7 +99,6 @@ export default function ChecklistPage() {
     };
   }, []);
 
-  // Confirmation Logic
   const volatilitySpike = liveMetrics ? Math.abs(liveMetrics.btcChange) > 4 || Math.abs(liveMetrics.ethChange) > 5 : baseData.factors.volatilitySpike;
   const liquidityShock = liveMetrics ? liveMetrics.volume24h < 15 : baseData.factors.liquidityShock;
   const crashConfirmed = baseData.factors.creditStress || volatilitySpike || liquidityShock || baseData.factors.externalShock;
@@ -134,7 +130,6 @@ export default function ChecklistPage() {
         </div>
       </header>
 
-      {/* Confirmation Hero */}
       <div className={cn(
         "rounded-[2rem] p-8 flex flex-col items-center justify-center gap-4 text-center border transition-all duration-700",
         crashConfirmed 
@@ -160,7 +155,6 @@ export default function ChecklistPage() {
         </div>
       </div>
 
-      {/* Real-time Volatility Chart */}
       <div className="bg-card rounded-3xl border border-border p-6 space-y-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -171,8 +165,8 @@ export default function ChecklistPage() {
         </div>
         
         <div className="h-48 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={marketData}>
+          <ChartContainer config={chartConfig} className="h-full w-full">
+            <BarChart data={marketData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
               <XAxis 
                 dataKey="name" 
@@ -199,11 +193,10 @@ export default function ChecklistPage() {
                 ))}
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         </div>
       </div>
 
-      {/* Checklist Grid */}
       <div className="bg-card rounded-3xl border border-border overflow-hidden">
         <div className="px-6 py-4 bg-muted/20 border-b border-border flex justify-between items-center">
           <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Conditions Evaluated</span>
@@ -234,7 +227,6 @@ export default function ChecklistPage() {
         </div>
       </div>
 
-      {/* Live Indicator Analysis */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2 px-1">
           <TrendingDown className="w-4 h-4 text-muted-foreground" />
@@ -376,7 +368,6 @@ export default function ChecklistPage() {
         </Accordion>
       </div>
 
-      {/* Suggested Actions */}
       <div className="flex flex-col gap-3 mt-4">
         <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Suggested Guidance</h3>
         <div className="space-y-2">
