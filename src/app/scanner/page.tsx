@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { 
+import {
   ShieldCheck, 
   AlertTriangle, 
   ArrowRight, 
@@ -21,7 +22,6 @@ import { getDailyRiskData } from '@/lib/mock-data';
 import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { analyzeStatement } from '@/ai/flows/analyze-statement-flow';
 
 type AlignmentStatus = 'ALIGNED' | 'AGGRESSIVE' | 'DEFENSIVE';
 
@@ -29,7 +29,6 @@ export default function ScannerPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // STRICT PRIVACY: State only, no persistence
   const [equity, setEquity] = useState(50);
   const [debt, setDebt] = useState(30);
   const [crypto, setCrypto] = useState(10);
@@ -58,48 +57,53 @@ export default function ScannerPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check for CSV or Excel types
-    const isCSV = file.name.toLowerCase().endsWith('.csv');
-    const isExcel = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls');
-    
-    if (!isCSV && !isExcel) {
+    const allowedTypes = ['.csv', '.xlsx', '.xls', '.pdf'];
+    const fileType = '.' + file.name.split('.').pop();
+    if (!allowedTypes.includes(fileType)) {
       toast({
         variant: "destructive",
         title: "Unsupported File",
-        description: "Please upload a .CSV or Excel export.",
+        description: "Please upload a .CSV, Excel, or .PDF export.",
       });
       return;
     }
 
     setIsScanning(true);
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const textContent = event.target?.result as string;
-      try {
-        // AI analyzes the raw content, optionally using the password context
-        const result = await analyzeStatement(textContent, filePassword);
-        
-        setEquity(Math.round(result.equity));
-        setDebt(Math.round(result.debt));
-        setCrypto(Math.round(result.crypto));
-        setCash(Math.round(result.cash));
-        
-        toast({
-          title: "Analysis Complete",
-          description: "Portfolio distribution extracted successfully.",
-        });
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Analysis Failed",
-          description: "Could not read structure. Ensure the password is correct if the file is protected.",
-        });
-      } finally {
-        setIsScanning(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('password', filePassword);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('File processing failed');
       }
-    };
-    reader.readAsText(file);
+
+      const result = await response.json();
+      
+      setEquity(Math.round(result.equity));
+      setDebt(Math.round(result.debt));
+      setCrypto(Math.round(result.crypto));
+      setCash(Math.round(result.cash));
+      
+      toast({
+        title: "Analysis Complete",
+        description: "Portfolio distribution extracted successfully.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Analysis Failed",
+        description: "Could not read structure. Ensure the password is correct if the file is protected.",
+      });
+    } finally {
+      setIsScanning(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const calculateAlignment = (): AlignmentStatus => {
@@ -142,7 +146,6 @@ export default function ScannerPage() {
         <p className="text-xs text-muted-foreground font-medium">Evaluate risk alignment with today's market regime.</p>
       </header>
 
-      {/* Upload Module */}
       <div className="bg-secondary/5 border border-dashed border-secondary/20 rounded-[2rem] p-8 flex flex-col items-center gap-6 text-center">
         <div className="relative">
           <div className={cn(
@@ -157,7 +160,7 @@ export default function ScannerPage() {
           <div className="space-y-2">
             <h3 className="text-sm font-black text-white">Analyze Statement</h3>
             <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
-              Upload a .CSV or Excel export.
+              Upload a .CSV, Excel or .PDF export.
             </p>
           </div>
 
@@ -181,7 +184,7 @@ export default function ScannerPage() {
               ref={fileInputRef} 
               onChange={handleFileUpload} 
               className="hidden" 
-              accept=".csv,.xlsx,.xls"
+              accept=".csv,.xlsx,.xls,.pdf"
             />
             
             <Button 
@@ -196,7 +199,6 @@ export default function ScannerPage() {
         </div>
       </div>
 
-      {/* Evaluation Result */}
       <div className={cn(
         "rounded-[2.5rem] p-8 flex flex-col items-center text-center border transition-all duration-700 shadow-2xl relative overflow-hidden",
         status === 'AGGRESSIVE' ? "bg-risk-crash/10 border-risk-crash/30" : 
@@ -229,7 +231,6 @@ export default function ScannerPage() {
         </div>
       </div>
 
-      {/* Input Module */}
       <div className="bg-card rounded-[2rem] border border-border p-8 space-y-8 shadow-xl">
         <div className="space-y-6">
           <AllocationInput label="Equity" value={equity} setValue={setEquity} />
@@ -256,7 +257,6 @@ export default function ScannerPage() {
         )}
       </div>
 
-      {/* Educational Suggestions */}
       <div className="space-y-3">
         <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Considerations</h3>
         <div className="space-y-2">
