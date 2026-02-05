@@ -1,10 +1,9 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { User, Bell, ShieldAlert, ExternalLink, Heart, Check, Coffee, Star } from 'lucide-react';
+import { User, Bell, ShieldAlert, ExternalLink, Heart, Check, Coffee, Star, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -19,12 +18,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 export default function SettingsPage() {
   const [isTrader, setIsTrader] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [isSupporter, setIsSupporter] = useState(false);
   const [showDonationDialog, setShowDonationDialog] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
   // Load supporter status from local storage
@@ -33,6 +39,12 @@ export default function SettingsPage() {
     if (supporterStatus === 'true') {
       setIsSupporter(true);
     }
+    
+    // Pre-load Razorpay script
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
   }, []);
 
   const handleDonateInitiate = (amount: string) => {
@@ -41,17 +53,69 @@ export default function SettingsPage() {
   };
 
   const confirmDonation = () => {
-    // In a production app, you would redirect to a Stripe Payment Link here:
-    // window.open(`https://buy.stripe.com/your_unique_link_${selectedAmount}`, '_blank');
+    setIsProcessing(true);
+
+    // RAZORPAY INTEGRATION LOGIC:
+    // In a real app, you would:
+    // 1. Create an order on your backend using Razorpay Node SDK.
+    // 2. Pass the order_id here.
     
-    setIsSupporter(true);
-    localStorage.setItem('crashguard_supporter', 'true');
-    setShowDonationDialog(false);
-    
-    toast({
-      title: "Thank You, Supporter!",
-      description: `Your contribution of ${selectedAmount} helps keep the signals clean and objective.`,
-    });
+    const amountInPaise = parseInt(selectedAmount.replace('$', '')) * 100 * 80; // Approximate USD to INR for Razorpay demo
+
+    const options = {
+      key: "YOUR_RAZORPAY_KEY_ID", // Replace with your actual Key ID from Razorpay Dashboard
+      amount: amountInPaise,
+      currency: "INR",
+      name: "CrashGuard",
+      description: `Support contribution: ${selectedAmount}`,
+      image: "https://picsum.photos/seed/crashguard/200/200",
+      handler: function (response: any) {
+        // Payment successful!
+        setIsSupporter(true);
+        localStorage.setItem('crashguard_supporter', 'true');
+        setIsProcessing(false);
+        setShowDonationDialog(false);
+        
+        toast({
+          title: "Payment Successful",
+          description: `Transaction ID: ${response.razorpay_payment_id}. Thank you for your support!`,
+        });
+      },
+      prefill: {
+        name: "CrashGuard User",
+        email: "user@example.com",
+      },
+      theme: {
+        color: "#6d28d9", // secondary color
+      },
+      modal: {
+        ondismiss: function() {
+          setIsProcessing(false);
+        }
+      }
+    };
+
+    try {
+      if (window.Razorpay) {
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } else {
+        // Fallback if script didn't load (Prototype behavior)
+        setTimeout(() => {
+          setIsSupporter(true);
+          localStorage.setItem('crashguard_supporter', 'true');
+          setIsProcessing(false);
+          setShowDonationDialog(false);
+          toast({
+            title: "Simulated Success",
+            description: "Razorpay script was not found, but we've simulated a successful support contribution for this prototype.",
+          });
+        }, 1500);
+      }
+    } catch (e) {
+      setIsProcessing(false);
+      console.error("Razorpay error:", e);
+    }
   };
 
   return (
@@ -59,7 +123,7 @@ export default function SettingsPage() {
       <header className="flex justify-between items-center">
         <h1 className="text-3xl font-extrabold tracking-tight text-white">Settings</h1>
         {isSupporter && (
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-full">
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-full animate-in zoom-in duration-300">
             <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
             <span className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Supporter</span>
           </div>
@@ -130,7 +194,7 @@ export default function SettingsPage() {
           )}
           
           <p className="text-[9px] text-center text-muted-foreground font-bold uppercase tracking-widest opacity-60">
-            Voluntary • No added features • Just Appreciation
+            Powered by Razorpay • Voluntary Support
           </p>
         </div>
       </div>
@@ -159,7 +223,7 @@ export default function SettingsPage() {
           <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-white" />
         </button>
         <div className="text-center pt-2">
-          <span className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.3em]">Version 1.2.0 • Build 88</span>
+          <span className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.3em]">Version 1.2.0 • Build 89</span>
         </div>
       </div>
 
@@ -172,15 +236,29 @@ export default function SettingsPage() {
               You are about to contribute <span className="font-bold text-white">{selectedAmount}</span>. 
               Contributions are voluntary and keep the app independent. 
               <br/><br/>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-secondary">Pro Tip:</span>
-              In production, this would open a Stripe Checkout link.
+              <span className="text-[10px] uppercase font-bold tracking-widest text-secondary">Secure Payment:</span>
+              This transaction is handled securely by Razorpay.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-col gap-2">
-            <AlertDialogAction onClick={confirmDonation} className="bg-secondary hover:bg-secondary/90 text-white font-bold rounded-xl">
-              Proceed to Support
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDonation();
+              }} 
+              disabled={isProcessing}
+              className="bg-secondary hover:bg-secondary/90 text-white font-bold rounded-xl h-12"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                `Pay ${selectedAmount} via Razorpay`
+              )}
             </AlertDialogAction>
-            <AlertDialogCancel className="rounded-xl border-border hover:bg-muted/20">Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isProcessing} className="rounded-xl border-border hover:bg-muted/20">Cancel</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
