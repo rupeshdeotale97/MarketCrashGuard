@@ -19,6 +19,7 @@ import {
   ArrowRight,
   Gauge
 } from 'lucide-react';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -184,7 +185,21 @@ export default function LiveSignalsPage() {
       <header className="flex justify-between items-start">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+            <TooltipProvider>
+              <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <div className="text-[11px] leading-tight">
+                  <strong>Realtime Indicator</strong>
+                  <div className="mt-1">• Pulses when the live feed updates (fetches every 10s).</div>
+                  <div>• Sentiment = (number of assets marked BULLISH ÷ total monitored assets) × 100.</div>
+                  <div className="mt-1">• Signals per-asset are derived from recent price change thresholds (e.g. crypto: &gt;2% → BULLISH, &lt;-1% → BEARISH, &lt;-4% → CRASH).</div>
+                </div>
+              </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <span className="text-[10px] font-black text-secondary uppercase tracking-[0.2em]">Live Intelligence</span>
           </div>
           <h1 className="text-3xl font-black text-white">Market Radar</h1>

@@ -34,13 +34,14 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
+  Tooltip as RechartsTooltip, 
   ResponsiveContainer,
   AreaChart,
   Area,
   ReferenceLine
 } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { Tooltip as UiTooltip, TooltipTrigger as UiTooltipTrigger, TooltipContent as UiTooltipContent, TooltipProvider as UiTooltipProvider } from '@/components/ui/tooltip';
 
 const historicalIntelligence = {
   '2008': {
@@ -321,7 +322,7 @@ export default function HistoryPage() {
                       tick={{fontSize: 10, fill: 'hsl(var(--muted-foreground))'}} 
                     />
                     <YAxis hide />
-                    <Tooltip content={<ChartTooltipContent hideLabel />} />
+                    <RechartsTooltip content={<ChartTooltipContent hideLabel />} />
                     <Area 
                       type="monotone" 
                       dataKey="level" 
@@ -357,7 +358,22 @@ export default function HistoryPage() {
           
           <div className="bg-card border border-border rounded-[2rem] p-7 space-y-6">
              <div className="flex items-center gap-3">
-              <Zap className="w-5 h-5 text-secondary" />
+              <UiTooltipProvider>
+                <UiTooltip>
+                  <UiTooltipTrigger asChild>
+                    <Zap className="w-5 h-5 text-secondary" />
+                  </UiTooltipTrigger>
+                  <UiTooltipContent className="max-w-xs">
+                    <div className="text-[11px] leading-tight">
+                      <strong>Real-time Indicators</strong>
+                      <div className="mt-1">• Inflation and Credit Spreads are direct sourced metrics displayed above.</div>
+                      <div className="mt-1">• Sentiment is computed as: (number of assets marked BULLISH ÷ total monitored assets) × 100.</div>
+                      <div className="mt-1">• Sentiment labels are derived from thresholds applied to the sentiment score (e.g., &gt;60 = Greed, &lt;40 = Panic).</div>
+                      <div className="mt-1">• Data fetched from <code>/api/market-sentiments</code> when the Benner view is active.</div>
+                    </div>
+                  </UiTooltipContent>
+                </UiTooltip>
+              </UiTooltipProvider>
               <h3 className="text-xs font-black uppercase tracking-widest text-white">Real-time Indicators</h3>
             </div>
             {loading ? (
@@ -365,23 +381,58 @@ export default function HistoryPage() {
                 <p className="text-sm text-muted-foreground">Loading...</p>
               </div>
             ) : marketData ? (
-              <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                      <Thermometer className="w-5 h-5 mx-auto text-risk-high" />
-                      <p className="text-sm font-bold mt-1">{marketData.inflation}</p>
-                      <p className="text-[9px] text-muted-foreground uppercase font-bold">Inflation</p>
-                  </div>
-                  <div className="text-center">
-                      <Banknote className="w-5 h-5 mx-auto text-risk-low" />
-                      <p className="text-sm font-bold mt-1">{marketData.creditSpreads}</p>
-                      <p className="text-[9px] text-muted-foreground uppercase font-bold">Credit Spreads</p>
-                  </div>
-                  <div className="text-center">
-                      <Gauge className="w-5 h-5 mx-auto text-risk-elevated" />
-                      <p className="text-sm font-bold mt-1">{marketData.sentiment}</p>
-                      <p className="text-[9px] text-muted-foreground uppercase font-bold">{marketData.sentimentLabel}</p>
-                  </div>
-              </div>
+              <UiTooltipProvider>
+                <div className="grid grid-cols-3 gap-4">
+                  <UiTooltip>
+                    <UiTooltipTrigger asChild>
+                      <div className="text-center cursor-help">
+                        <Thermometer className="w-5 h-5 mx-auto text-risk-high" />
+                        <p className="text-sm font-bold mt-1">{marketData.inflation}</p>
+                        <p className="text-[9px] text-muted-foreground uppercase font-bold">Inflation</p>
+                      </div>
+                    </UiTooltipTrigger>
+                    <UiTooltipContent className="max-w-xs">
+                      <div className="text-[11px] leading-tight">
+                        <strong>Inflation</strong>
+                        <div className="mt-1">Reported CPI/PCE or regional equivalent. Shown value is the most recent published rate from the data source.</div>
+                      </div>
+                    </UiTooltipContent>
+                  </UiTooltip>
+
+                  <UiTooltip>
+                    <UiTooltipTrigger asChild>
+                      <div className="text-center cursor-help">
+                        <Banknote className="w-5 h-5 mx-auto text-risk-low" />
+                        <p className="text-sm font-bold mt-1">{marketData.creditSpreads}</p>
+                        <p className="text-[9px] text-muted-foreground uppercase font-bold">Credit Spreads</p>
+                      </div>
+                    </UiTooltipTrigger>
+                    <UiTooltipContent className="max-w-xs">
+                      <div className="text-[11px] leading-tight">
+                        <strong>Credit Spreads</strong>
+                        <div className="mt-1">Difference between corporate bond yields and risk-free Treasuries. Wider spreads indicate higher credit stress/liquidity risk.</div>
+                      </div>
+                    </UiTooltipContent>
+                  </UiTooltip>
+
+                  <UiTooltip>
+                    <UiTooltipTrigger asChild>
+                      <div className="text-center cursor-help">
+                        <Gauge className="w-5 h-5 mx-auto text-risk-elevated" />
+                        <p className="text-sm font-bold mt-1">{marketData.sentiment}</p>
+                        <p className="text-[9px] text-muted-foreground uppercase font-bold">{marketData.sentimentLabel}</p>
+                      </div>
+                    </UiTooltipTrigger>
+                    <UiTooltipContent className="max-w-xs">
+                      <div className="text-[11px] leading-tight">
+                        <strong>Aggregated Sentiment</strong>
+                        <div className="mt-1">Calculated as (number of assets marked BULLISH ÷ total monitored assets) × 100. Labels map to thresholds (e.g., &gt;60 = Greed, &lt;40 = Panic).</div>
+                        <div className="mt-1">Data originates from <code>/api/market-sentiments</code>.</div>
+                      </div>
+                    </UiTooltipContent>
+                  </UiTooltip>
+                </div>
+              </UiTooltipProvider>
             ) : (
               <div className="flex justify-center items-center h-24">
                 <p className="text-sm text-muted-foreground">Failed to load data.</p>
