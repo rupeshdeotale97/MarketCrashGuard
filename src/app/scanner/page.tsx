@@ -4,12 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   ShieldCheck, 
   AlertTriangle, 
-  HelpCircle, 
   ArrowRight, 
   Info, 
-  Upload, 
-  FileSearch, 
+  FileText, 
   Loader2,
+  FileSearch,
   CheckCircle2,
   X
 } from 'lucide-react';
@@ -57,11 +56,15 @@ export default function ScannerPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
+    // Support CSV and common text-based formats for analysis
+    const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/plain'];
+    const isCSV = file.name.endsWith('.csv') || file.type === 'text/csv';
+    
+    if (!isCSV) {
       toast({
         variant: "destructive",
         title: "Unsupported File",
-        description: "Please upload an image of your statement (JPG, PNG).",
+        description: "Please upload a .CSV export of your statement.",
       });
       return;
     }
@@ -69,9 +72,10 @@ export default function ScannerPage() {
     setIsScanning(true);
     const reader = new FileReader();
     reader.onload = async (event) => {
-      const dataUri = event.target?.result as string;
+      const textContent = event.target?.result as string;
       try {
-        const result = await analyzeStatement(dataUri);
+        // AI analyzes the raw CSV text
+        const result = await analyzeStatement(textContent);
         
         setEquity(Math.round(result.equity));
         setDebt(Math.round(result.debt));
@@ -79,21 +83,21 @@ export default function ScannerPage() {
         setCash(Math.round(result.cash));
         
         toast({
-          title: "Scan Complete",
-          description: "Portfolio data extracted successfully.",
+          title: "Analysis Complete",
+          description: "Portfolio distribution extracted from CSV.",
         });
       } catch (error) {
         toast({
           variant: "destructive",
-          title: "Scan Failed",
-          description: "Could not read statement. Please enter values manually.",
+          title: "Analysis Failed",
+          description: "Could not read CSV structure. Please check the file or enter values manually.",
         });
       } finally {
         setIsScanning(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
       }
     };
-    reader.readAsDataURL(file);
+    reader.readAsText(file);
   };
 
   const calculateAlignment = (): AlignmentStatus => {
@@ -137,23 +141,23 @@ export default function ScannerPage() {
         <p className="text-xs text-muted-foreground font-medium">Evaluate risk alignment with today's market regime.</p>
       </header>
 
-      {/* CAS File Scanner Trigger */}
+      {/* CSV File Scanner Trigger */}
       <div className="bg-secondary/5 border border-dashed border-secondary/20 rounded-[2rem] p-6 flex flex-col items-center gap-4 text-center">
         <div className="relative">
           <div className={cn(
             "p-4 rounded-full bg-secondary/10 text-secondary transition-all",
             isScanning && "animate-pulse scale-110 bg-secondary/20"
           )}>
-            {isScanning ? <Loader2 className="w-8 h-8 animate-spin" /> : <FileSearch className="w-8 h-8" />}
+            {isScanning ? <Loader2 className="w-8 h-8 animate-spin" /> : <FileText className="w-8 h-8" />}
           </div>
           {isScanning && (
             <div className="absolute inset-0 border-2 border-secondary rounded-full animate-ping opacity-20" />
           )}
         </div>
         <div className="space-y-1">
-          <h3 className="text-sm font-black text-white">Scan Statement (CAS)</h3>
+          <h3 className="text-sm font-black text-white">Analyze CSV Statement</h3>
           <p className="text-[10px] text-muted-foreground font-medium max-w-[200px] mx-auto leading-relaxed">
-            Upload an image of your statement to auto-fill percentages.
+            Upload your broker's .CSV export to auto-fill percentages.
           </p>
         </div>
         <input 
@@ -161,7 +165,7 @@ export default function ScannerPage() {
           ref={fileInputRef} 
           onChange={handleFileUpload} 
           className="hidden" 
-          accept="image/*"
+          accept=".csv"
         />
         <Button 
           variant="outline" 
@@ -169,7 +173,7 @@ export default function ScannerPage() {
           onClick={() => fileInputRef.current?.click()}
           className="rounded-xl border-secondary/40 h-10 px-6 text-[10px] font-black uppercase tracking-widest hover:bg-secondary/10"
         >
-          {isScanning ? "Analyzing..." : "Select Image"}
+          {isScanning ? "Analyzing Data..." : "Select CSV File"}
         </Button>
       </div>
 
@@ -211,7 +215,7 @@ export default function ScannerPage() {
         <div className="space-y-6">
           <AllocationInput label="Equity" value={equity} setValue={setEquity} />
           <AllocationInput label="Debt / Bonds" value={debt} setValue={setDebt} />
-          <AllocationInput label="Crypto" value={crypto} setValue={setCrypto} />
+          <AllocationInput label="Crypto" value={crypto} setValue={setEquity} />
           <AllocationInput label="Cash" value={cash} setValue={setCash} />
         </div>
 

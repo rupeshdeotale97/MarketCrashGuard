@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview AI flow to analyze financial statements (CAS).
+ * @fileOverview AI flow to analyze financial statements (CSV/Text).
  * 
- * - analyzeStatement: Extracts portfolio allocation percentages from a statement image.
+ * - analyzeStatement: Extracts portfolio allocation percentages from statement text.
  * 
  * Uses Genkit 1.x defineFlow pattern.
  */
@@ -11,10 +11,10 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const AnalyzeStatementInputSchema = z.object({
-  photoDataUri: z
+  fileContent: z
     .string()
     .describe(
-      "A photo of a financial statement (CAS), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "The raw text content extracted from a financial statement (CSV or exported text)."
     ),
 });
 
@@ -38,26 +38,30 @@ const analyzeStatementFlow = ai.defineFlow(
     const { output } = await ai.generate({
       model: 'googleai/gemini-1.5-flash',
       output: { schema: AnalyzeStatementOutputSchema },
-      prompt: `You are a professional financial statement analyzer. Your goal is to extract asset allocation percentages from the provided image (Consolidated Account Statement or CAS).
+      prompt: `You are a professional financial data analyst. Your goal is to extract asset allocation percentages from the provided CSV or text statement data.
       
-      Look for:
+      Analyze the text content for:
       - Equity/Stocks/Mutual Funds (Equity)
       - Debt/Bonds/Fixed Income (Debt)
       - Cryptocurrency/Digital Assets (Crypto)
       - Cash/Bank Balance/Liquidity (Cash)
       
-      If specific labels aren't found, map the values to the closest category. 
-      Ensure the total is exactly 100%. If you can't find specific percentages, estimate based on the portfolio value distribution shown in the image.
+      Guidelines:
+      1. Map the detected assets to the closest category above.
+      2. Ensure the total of percentages is exactly 100%.
+      3. If specific percentages are not explicitly stated, estimate them based on the market value of each line item.
+      4. Disregard any non-portfolio related transactions.
       
-      Context: {{media url=photoDataUri}}`,
-      input: { photoDataUri: input.photoDataUri },
+      Statement Data:
+      {{{fileContent}}}`,
+      input: { fileContent: input.fileContent },
     });
 
-    if (!output) throw new Error('Failed to parse statement.');
+    if (!output) throw new Error('Failed to parse statement content.');
     return output;
   }
 );
 
-export async function analyzeStatement(photoDataUri: string): Promise<AnalyzeStatementOutput> {
-  return analyzeStatementFlow({ photoDataUri });
+export async function analyzeStatement(fileContent: string): Promise<AnalyzeStatementOutput> {
+  return analyzeStatementFlow({ fileContent });
 }
