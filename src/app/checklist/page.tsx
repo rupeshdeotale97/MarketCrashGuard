@@ -17,7 +17,10 @@ import {
   TrendingUp,
   Coins,
   Mountain,
-  Banknote
+  Banknote,
+  Droplets,
+  Flame,
+  Scale
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -156,114 +159,60 @@ export default function ChecklistPage() {
       title: "Global Systemic",
       icon: <Globe className="w-4 h-4 text-blue-500" />,
       items: [
-        { 
-          label: "Systemic Credit Stress", 
-          value: baseData.factors.creditStress, 
-          desc: "Interbank counterparty risk & bond spreads.", 
-          trigger: "> 300bps TED Spread" 
-        },
-        { 
-          label: "Yield Curve Inversion", 
-          value: true, 
-          desc: "Recessionary signal from bond market duration spreads.", 
-          trigger: "10Y-2Y < -0.5%" 
-        },
-        { 
-          label: "External Macro Shock", 
-          value: baseData.factors.externalShock, 
-          desc: "Geopolitical events or central bank emergency pivots.", 
-          trigger: "Manual Protocol IV" 
-        },
+        { label: "Systemic Credit Stress", value: baseData.factors.creditStress, desc: "Interbank counterparty risk & bond spreads.", trigger: "> 300bps TED" },
+        { label: "Yield Curve Inversion", value: true, desc: "Recessionary signal from bond market duration spreads.", trigger: "10Y-2Y < -0.5%" },
+        { label: "External Macro Shock", value: baseData.factors.externalShock, desc: "Geopolitical events or central bank emergency pivots.", trigger: "Protocol IV" },
+        { label: "High-Yield Debt Spreads", value: false, desc: "Junk bond yield premiums over Treasury bonds.", trigger: "> 500bps Spread" },
+        { label: "Sovereign Default Risk", value: false, desc: "Credit Default Swaps (CDS) for major economies.", trigger: "> 100bps CDS" },
+        { label: "Reverse Repo Liquidity", value: false, desc: "Overnight liquidity drainage from the Fed window.", trigger: "< $200B ON RRP" },
       ]
     },
     {
       title: "Indian Market",
       icon: <Flag className="w-4 h-4 text-orange-500" />,
       items: [
-        { 
-          label: "NIFTY Volatility Spike", 
-          value: liveMetrics.niftyChange < -2, 
-          desc: "Extreme daily deviation in domestic benchmarks.", 
-          trigger: "Daily Fall > 2%" 
-        },
-        { 
-          label: "FII Liquidity Drain", 
-          value: false, 
-          desc: "Foreign Institutional Investors heavy selling regime.", 
-          trigger: "> ₹5,000Cr Sell" 
-        },
+        { label: "NIFTY Volatility Spike", value: liveMetrics.niftyChange < -2, desc: "Extreme daily deviation in domestic benchmarks.", trigger: "Daily Fall > 2%" },
+        { label: "FII Liquidity Drain", value: false, desc: "Foreign Institutional Investors heavy selling regime.", trigger: "> ₹5,000Cr Sell" },
+        { label: "DII Buying Fatigue", value: false, desc: "Domestic Institutional Investors stopping the floor.", trigger: "Net Sell Day" },
+        { label: "RBI Repo Pivot", value: false, desc: "Sudden hawkish change in interest rate trajectory.", trigger: "Rate Hike > 25bps" },
+        { label: "IPO Frenzy Index", value: false, desc: "Excessive retail participation in low-quality paper.", trigger: "> 100x Oversub" },
+        { label: "Rural Demand Shock", value: false, desc: "Consumer staples volume drop in non-urban areas.", trigger: "< 3% YoY Growth" },
       ]
     },
     {
       title: "Commodities",
       icon: <Mountain className="w-4 h-4 text-yellow-600" />,
       items: [
-        { 
-          label: "Gold Safe Haven Pivot", 
-          value: false, 
-          desc: "Gold outperforming equities as fear index rises.", 
-          trigger: "XAU/USD > $2,500" 
-        },
-        { 
-          label: "Energy Supply Shock", 
-          value: false, 
-          desc: "Oil price spike causing industrial cost compression.", 
-          trigger: "Brent > $90/bbl" 
-        },
-        { 
-          label: "Copper Demand Sink", 
-          value: false, 
-          desc: "Dr. Copper signaling industrial slowdown.", 
-          trigger: "HG < $4.00/lb" 
-        },
+        { label: "Gold Safe Haven Pivot", value: false, desc: "Gold outperforming equities as fear index rises.", trigger: "XAU/USD > $2,500" },
+        { label: "Energy Supply Shock", value: false, desc: "Oil price spike causing industrial cost compression.", trigger: "Brent > $90/bbl" },
+        { label: "Copper Demand Sink", value: false, desc: "Dr. Copper signaling industrial slowdown.", trigger: "HG < $4.00/lb" },
+        { label: "Silver Industrial Lag", value: false, desc: "Silver underperforming despite inflation.", trigger: "XAG/XAU < 0.012" },
+        { label: "Agricultural Spikes", value: false, desc: "Wheat/Corn prices causing global food insecurity.", trigger: "> 15% Monthly" },
+        { label: "Lithium Demand Crash", value: false, desc: "EV/Battery metals signaling tech slowdown.", trigger: "< $15k/tonne" },
       ]
     },
     {
       title: "Currencies",
       icon: <Banknote className="w-4 h-4 text-emerald-500" />,
       items: [
-        { 
-          label: "Dollar Index (DXY) Surge", 
-          value: false, 
-          desc: "USD strength draining global emerging market liquidity.", 
-          trigger: "DXY > 105.50" 
-        },
-        { 
-          label: "INR Devaluation", 
-          value: false, 
-          desc: "Sudden weakness in Rupee against the Dollar.", 
-          trigger: "USD/INR > 84.50" 
-        },
-        { 
-          label: "Yen Carry Unwind", 
-          value: false, 
-          desc: "JPY strength forcing global margin liquidations.", 
-          trigger: "USD/JPY < 145" 
-        },
+        { label: "Dollar Index (DXY) Surge", value: false, desc: "USD strength draining global EM liquidity.", trigger: "DXY > 105.50" },
+        { label: "INR Devaluation", value: false, desc: "Sudden weakness in Rupee against the Dollar.", trigger: "USD/INR > 84.50" },
+        { label: "Yen Carry Unwind", value: false, desc: "JPY strength forcing global margin liquidations.", trigger: "USD/JPY < 145" },
+        { label: "Euro Parity Break", value: false, desc: "EUR/USD falling below psychological floor.", trigger: "EUR/USD < 1.00" },
+        { label: "EM Currency Basket", value: false, desc: "Broad Emerging Market currency collapse.", trigger: "> 3% Weekly Drop" },
+        { label: "Cross-Border Controls", value: false, desc: "Capital controls or digital fiat restrictions.", trigger: "Manual Check" },
       ]
     },
     {
       title: "Crypto Index",
       icon: <Coins className="w-4 h-4 text-secondary" />,
       items: [
-        { 
-          label: "Volatility Implosion", 
-          value: volatilitySpike, 
-          desc: "Extreme price deviation in BTC/ETH benchmarks.", 
-          trigger: "> 5% Daily move" 
-        },
-        { 
-          label: "Liquidity Evaporation", 
-          value: liquidityShock, 
-          desc: "Order book depth & trading volume drying up.", 
-          trigger: "< $15B BTC Volume" 
-        },
-        { 
-          label: "Recursive Leverage", 
-          value: false, 
-          desc: "Extreme on-chain or exchange margin debt buildup.", 
-          trigger: "> 1.0 Funding Rate" 
-        },
+        { label: "Volatility Implosion", value: volatilitySpike, desc: "Extreme price deviation in BTC/ETH benchmarks.", trigger: "> 5% Daily move" },
+        { label: "Liquidity Evaporation", value: liquidityShock, desc: "Order book depth & trading volume drying up.", trigger: "< $15B BTC Vol" },
+        { label: "Recursive Leverage", value: false, desc: "Extreme on-chain or exchange margin debt buildup.", trigger: "> 1.0 Funding" },
+        { label: "Stablecoin De-peg", value: false, desc: "USDT/USDC trading significantly below parity.", trigger: "Price < $0.98" },
+        { label: "Hashrate Capitulation", value: false, desc: "Miners forced to sell reserves at a loss.", trigger: "-10% Hashrate" },
+        { label: "DEX/CEX Arb Gap", value: false, desc: "Liquidity fragmented across trading venues.", trigger: "> 2% Spread" },
       ]
     }
   ];
@@ -347,34 +296,6 @@ export default function ChecklistPage() {
         </div>
       </div>
 
-      {/* Global Indices Chart */}
-      <div className="bg-card rounded-3xl border border-border p-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-blue-500" />
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Global Equity Indices</span>
-          </div>
-          <span className="text-[10px] text-muted-foreground font-mono">DAILY %</span>
-        </div>
-        <div className="h-40 w-full">
-          {isMounted ? (
-            <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
-              <BarChart data={globalIndicesData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fill: 'hsl(var(--muted-foreground))'}} />
-                <Tooltip content={<ChartTooltipContent hideLabel />} cursor={{fill: 'hsl(var(--muted)/0.3)'}} />
-                <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={2} />
-                <Bar dataKey="change" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
-          ) : (
-            <div className="h-full w-full flex items-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Grouped Checklist */}
       <div className="space-y-6">
         <div className="flex items-center gap-2 px-1">
@@ -418,94 +339,6 @@ export default function ChecklistPage() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Live Indicator Details (Accordion) */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2 px-1">
-          <TrendingDown className="w-4 h-4 text-muted-foreground" />
-          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Live Indicator Analysis</h3>
-        </div>
-        
-        <Accordion type="single" collapsible className="w-full space-y-3">
-          <AccordionItem value="volatility" className="border rounded-2xl bg-muted/10 px-4 overflow-hidden border-border transition-colors hover:border-secondary/30">
-            <AccordionTrigger className="hover:no-underline py-4">
-              <div className="flex items-center gap-3">
-                <Activity className="w-4 h-4 text-secondary" />
-                <span className="font-bold text-sm">Crypto Deviation</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pb-4 pt-1">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-background/40 rounded-2xl border border-border/60 text-center">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold mb-2">BTC</p>
-                  <p className={cn("text-2xl font-black leading-none", (liveMetrics.btcChange || 0) < 0 ? "text-risk-crash" : "text-risk-low")}>
-                    {liveMetrics.btcChange.toFixed(2)}%
-                  </p>
-                </div>
-                <div className="p-4 bg-background/40 rounded-2xl border border-border/60 text-center">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold mb-2">ETH</p>
-                  <p className={cn("text-2xl font-black leading-none", (liveMetrics.ethChange || 0) < 0 ? "text-risk-crash" : "text-risk-low")}>
-                    {liveMetrics.ethChange.toFixed(2)}%
-                  </p>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="india" className="border rounded-2xl bg-muted/10 px-4 overflow-hidden border-border transition-colors hover:border-secondary/30">
-            <AccordionTrigger className="hover:no-underline py-4">
-              <div className="flex items-center gap-3">
-                <Flag className="w-4 h-4 text-orange-500" />
-                <span className="font-bold text-sm">Indian Market (NIFTY)</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pb-4 pt-1">
-              <div className="p-4 bg-background/40 rounded-2xl border border-border/60 space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-muted-foreground">NIFTY 50 SPOT</span>
-                  <p className={cn("font-black", (liveMetrics.niftyChange || 0) < 0 ? "text-risk-crash" : "text-risk-low")}>
-                    {liveMetrics.niftyChange.toFixed(2)}%
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                    <span className="text-risk-crash">Panic</span>
-                    <span className="text-risk-low">Greed</span>
-                  </div>
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden flex">
-                    <div 
-                      className="h-full bg-gradient-to-r from-risk-crash via-risk-elevated to-risk-low transition-all duration-1000" 
-                      style={{ width: `${Math.max(10, Math.min(90, liveMetrics.indiaSentiment))}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="macro" className="border rounded-2xl bg-muted/10 px-4 overflow-hidden border-border transition-colors hover:border-secondary/30">
-            <AccordionTrigger className="hover:no-underline py-4">
-              <div className="flex items-center gap-3">
-                <LineChart className="w-4 h-4 text-blue-500" />
-                <span className="font-bold text-sm">US Market (S&P 500)</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pb-4 pt-1">
-              <div className="p-4 bg-background/40 rounded-2xl border border-border/60 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground font-bold">SPX Correlation</span>
-                  <span className={cn("text-lg font-black", (liveMetrics.spxChange || 0) < -1 ? "text-risk-crash" : "text-white")}>
-                    {liveMetrics.spxChange.toFixed(2)}%
-                  </span>
-                </div>
-                <p className="text-[10px] text-muted-foreground leading-relaxed italic text-center">
-                  Global systemic stress index: {liveMetrics.globalSentiment < 40 ? "CRITICAL" : "MODERATE"}.
-                </p>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
       </div>
 
       {/* Suggested Actions */}
