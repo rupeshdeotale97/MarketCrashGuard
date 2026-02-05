@@ -1,6 +1,7 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import {MobileNav} from '@/components/mobile-nav';
+import {Toaster} from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'CrashGuard',
@@ -27,6 +28,7 @@ export default function RootLayout({
           {children}
         </main>
         <MobileNav />
+        <Toaster />
       </body>
     </html>
   );

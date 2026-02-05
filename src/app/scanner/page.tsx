@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from 'react';
-import { UserCircle, ShieldCheck, AlertTriangle, HelpCircle } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { ExposureStatus } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ScannerPage() {
   const [equity, setEquity] = useState(50);
@@ -14,13 +14,24 @@ export default function ScannerPage() {
   const [crypto, setCrypto] = useState(10);
   const [cash, setCash] = useState(10);
   const [leverage, setLeverage] = useState(false);
+  const { toast } = useToast();
 
-  // Simple logic for educational purposes
   const calculateStatus = (): ExposureStatus => {
     const riskExposure = equity + crypto;
     if (leverage || riskExposure > 70) return 'OVEREXPOSED';
     if (riskExposure < 30) return 'DEFENSIVE';
     return 'BALANCED';
+  };
+
+  const handleLeverageToggle = (checked: boolean) => {
+    setLeverage(checked);
+    if (checked) {
+      toast({
+        variant: "destructive",
+        title: "High Risk Warning",
+        description: "Leverage significantly increases liquidation risk.",
+      });
+    }
   };
 
   const status = calculateStatus();
@@ -60,17 +71,17 @@ export default function ScannerPage() {
 
       {/* Input Form */}
       <div className="bg-card rounded-[2rem] border border-border p-6 space-y-8">
-        <ScannerInput label="Equity exposure" value={equity} setValue={setEquity} color="bg-blue-500" />
-        <ScannerInput label="Debt / Fixed income" value={debt} setValue={setDebt} color="bg-orange-500" />
-        <ScannerInput label="Crypto exposure" value={crypto} setValue={setCrypto} color="bg-purple-500" />
-        <ScannerInput label="Cash reserves" value={cash} setValue={setCash} color="bg-green-500" />
+        <ScannerInput label="Equity exposure" value={equity} setValue={setEquity} />
+        <ScannerInput label="Debt / Fixed income" value={debt} setValue={setDebt} />
+        <ScannerInput label="Crypto exposure" value={crypto} setValue={setCrypto} />
+        <ScannerInput label="Cash reserves" value={cash} setValue={setCash} />
 
         <div className="flex items-center justify-between pt-4 border-t border-border">
           <div className="flex flex-col">
             <span className="font-bold text-sm">Use Leverage?</span>
             <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Margin / Borrowed Funds</span>
           </div>
-          <Switch checked={leverage} onCheckedChange={setLeverage} />
+          <Switch checked={leverage} onCheckedChange={handleLeverageToggle} />
         </div>
 
         {total !== 100 && (
@@ -90,7 +101,7 @@ export default function ScannerPage() {
   );
 }
 
-function ScannerInput({ label, value, setValue, color }: { label: string, value: number, setValue: (v: number) => void, color: string }) {
+function ScannerInput({ label, value, setValue }: { label: string, value: number, setValue: (v: number) => void }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-end">

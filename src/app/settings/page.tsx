@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -28,30 +27,57 @@ export default function SettingsPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
-  // Load preferences from local storage
   useEffect(() => {
+    // Supporter status
     const supporterStatus = localStorage.getItem('crashguard_supporter');
     if (supporterStatus === 'true') {
       setIsSupporter(true);
     }
     
+    // Notification preference
     const notificationPref = localStorage.getItem('crashguard_notifications');
-    if (notificationPref === 'true' && "Notification" in window && Notification.permission === "granted") {
-      setNotifications(true);
+    if (notificationPref === 'true' && typeof window !== 'undefined' && "Notification" in window) {
+      if (Notification.permission === "granted") {
+        setNotifications(true);
+      }
+    }
+
+    // Mode preference
+    const modePref = localStorage.getItem('crashguard_mode');
+    if (modePref === 'trader') {
+      setIsTrader(true);
     }
   }, []);
 
-  const handleNotificationToggle = async (checked: boolean) => {
-    if (checked) {
-      if (!("Notification" in window)) {
-        toast({
-          variant: "destructive",
-          title: "Not Supported",
-          description: "This browser does not support desktop notifications.",
-        });
-        return;
-      }
+  const handleModeToggle = (checked: boolean) => {
+    setIsTrader(checked);
+    localStorage.setItem('crashguard_mode', checked ? 'trader' : 'investor');
+    toast({
+      title: checked ? "Trader Mode Active" : "Investor Mode Active",
+      description: "App guidance will adjust to your profile.",
+    });
+  };
 
+  const handleNotificationToggle = async (checked: boolean) => {
+    if (!checked) {
+      setNotifications(false);
+      localStorage.setItem('crashguard_notifications', 'false');
+      toast({
+        title: "Notifications Disabled",
+      });
+      return;
+    }
+
+    if (typeof window === 'undefined' || !("Notification" in window)) {
+      toast({
+        variant: "destructive",
+        title: "Not Supported",
+        description: "This browser does not support notifications.",
+      });
+      return;
+    }
+
+    try {
       const permission = await Notification.requestPermission();
       if (permission === "granted") {
         setNotifications(true);
@@ -61,25 +87,25 @@ export default function SettingsPage() {
           description: "You will now receive real-time risk alerts.",
         });
       } else {
-        setNotifications(false);
-        localStorage.setItem('crashguard_notifications', 'false');
         toast({
           variant: "destructive",
           title: "Permission Denied",
-          description: "Please enable notifications in your browser settings to receive alerts.",
+          description: "Enable notifications in browser settings.",
         });
       }
-    } else {
-      setNotifications(false);
-      localStorage.setItem('crashguard_notifications', 'false');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not request notification permission.",
+      });
     }
   };
 
   const sendTestNotification = () => {
-    if ("Notification" in window && Notification.permission === "granted") {
+    if (typeof window !== 'undefined' && "Notification" in window && Notification.permission === "granted") {
       new Notification("CrashGuard Alert", {
         body: "Test notification: System status is currently STABLE.",
-        icon: "/favicon.ico",
       });
       toast({
         title: "Test Sent",
@@ -89,7 +115,7 @@ export default function SettingsPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Notification permission is not granted.",
+        description: "Permission not granted.",
       });
     }
   };
@@ -111,10 +137,10 @@ export default function SettingsPage() {
       setShowDonationDialog(false);
       
       toast({
-        title: "Redirected to Razorpay",
+        title: "Success",
         description: "Thank you for your voluntary support!",
       });
-    }, 1200);
+    }, 1500);
   };
 
   return (
@@ -143,7 +169,7 @@ export default function SettingsPage() {
           </div>
           <Switch 
             checked={isTrader} 
-            onCheckedChange={setIsTrader} 
+            onCheckedChange={handleModeToggle} 
             className="data-[state=checked]:bg-secondary"
           />
         </div>
@@ -202,6 +228,7 @@ export default function SettingsPage() {
                 onClick={() => {
                   localStorage.removeItem('crashguard_supporter');
                   setIsSupporter(false);
+                  toast({ title: "Supporter status reset" });
                 }}
               >
                 Reset Supporter Status
@@ -231,10 +258,6 @@ export default function SettingsPage() {
       </div>
 
       <div className="mt-4 flex flex-col gap-3">
-        <button className="flex items-center justify-between w-full px-6 py-4 bg-muted/20 hover:bg-muted/40 rounded-2xl border border-border transition-colors group">
-          <span className="font-bold text-xs uppercase tracking-widest">Privacy Policy</span>
-          <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-white" />
-        </button>
         <div className="text-center pt-2">
           <span className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.3em]">Version 1.2.0 • Build 92</span>
         </div>
