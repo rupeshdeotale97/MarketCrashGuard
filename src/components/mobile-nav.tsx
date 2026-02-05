@@ -2,15 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, ShieldCheck, History, BookOpen, UserCircle, Settings } from 'lucide-react';
+import { Home, ShieldCheck, History, BookOpen, Activity, Settings, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
   { href: '/checklist', icon: ShieldCheck, label: 'Risk' },
+  { href: '/live', icon: Activity, label: 'Live' },
   { href: '/history', icon: History, label: 'History' },
   { href: '/playbooks', icon: BookOpen, label: 'Library' },
-  { href: '/scanner', icon: UserCircle, label: 'Scanner' },
   { href: '/settings', icon: Settings, label: 'More' },
 ];
 
