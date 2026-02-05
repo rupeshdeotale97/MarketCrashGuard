@@ -47,6 +47,7 @@ export default function SettingsPage() {
     // Opening the user's specific Razorpay payment page link.
     const razorpayLink = 'https://razorpay.me/@poojarupeshdeotale';
     
+    // Open in new tab
     window.open(razorpayLink, '_blank');
     
     // For prototype/feedback purposes, we simulate the success state 
@@ -130,6 +131,17 @@ export default function SettingsPage() {
                 <Coffee className="w-6 h-6 text-yellow-500" />
               </div>
               <p className="text-[11px] font-bold text-white text-center">You are a Supporter! Thank you for keeping the lights on.</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground hover:text-white"
+                onClick={() => {
+                  localStorage.removeItem('crashguard_supporter');
+                  setIsSupporter(false);
+                }}
+              >
+                Reset Supporter Status (Test)
+              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-3">
