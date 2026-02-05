@@ -12,12 +12,12 @@ import {
   Zap, 
   Globe,
   TrendingDown,
-  MousePointer2,
   Flag,
   LineChart,
-  ArrowRight,
   TrendingUp,
-  Coins
+  Coins,
+  Mountain,
+  Banknote
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -34,7 +34,6 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  Cell,
   ReferenceLine
 } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
@@ -164,21 +163,15 @@ export default function ChecklistPage() {
           trigger: "> 300bps TED Spread" 
         },
         { 
-          label: "Dollar Wrecking Ball", 
-          value: false, 
-          desc: "DXY strength draining global risk liquidity.", 
-          trigger: "DXY > 105.00" 
-        },
-        { 
           label: "Yield Curve Inversion", 
           value: true, 
-          desc: "Recessionary signal from bond market.", 
+          desc: "Recessionary signal from bond market duration spreads.", 
           trigger: "10Y-2Y < -0.5%" 
         },
         { 
           label: "External Macro Shock", 
           value: baseData.factors.externalShock, 
-          desc: "Geopolitical events or central bank pivots.", 
+          desc: "Geopolitical events or central bank emergency pivots.", 
           trigger: "Manual Protocol IV" 
         },
       ]
@@ -196,14 +189,56 @@ export default function ChecklistPage() {
         { 
           label: "FII Liquidity Drain", 
           value: false, 
-          desc: "Foreign Institutional Investors heavy selling.", 
+          desc: "Foreign Institutional Investors heavy selling regime.", 
           trigger: "> ₹5,000Cr Sell" 
+        },
+      ]
+    },
+    {
+      title: "Commodities",
+      icon: <Mountain className="w-4 h-4 text-yellow-600" />,
+      items: [
+        { 
+          label: "Gold Safe Haven Pivot", 
+          value: false, 
+          desc: "Gold outperforming equities as fear index rises.", 
+          trigger: "XAU/USD > $2,500" 
+        },
+        { 
+          label: "Energy Supply Shock", 
+          value: false, 
+          desc: "Oil price spike causing industrial cost compression.", 
+          trigger: "Brent > $90/bbl" 
+        },
+        { 
+          label: "Copper Demand Sink", 
+          value: false, 
+          desc: "Dr. Copper signaling industrial slowdown.", 
+          trigger: "HG < $4.00/lb" 
+        },
+      ]
+    },
+    {
+      title: "Currencies",
+      icon: <Banknote className="w-4 h-4 text-emerald-500" />,
+      items: [
+        { 
+          label: "Dollar Index (DXY) Surge", 
+          value: false, 
+          desc: "USD strength draining global emerging market liquidity.", 
+          trigger: "DXY > 105.50" 
         },
         { 
           label: "INR Devaluation", 
           value: false, 
-          desc: "Sudden weakness in Rupee against USD.", 
+          desc: "Sudden weakness in Rupee against the Dollar.", 
           trigger: "USD/INR > 84.50" 
+        },
+        { 
+          label: "Yen Carry Unwind", 
+          value: false, 
+          desc: "JPY strength forcing global margin liquidations.", 
+          trigger: "USD/JPY < 145" 
         },
       ]
     },
@@ -214,19 +249,19 @@ export default function ChecklistPage() {
         { 
           label: "Volatility Implosion", 
           value: volatilitySpike, 
-          desc: "Extreme price deviation in BTC/ETH.", 
+          desc: "Extreme price deviation in BTC/ETH benchmarks.", 
           trigger: "> 5% Daily move" 
         },
         { 
           label: "Liquidity Evaporation", 
           value: liquidityShock, 
-          desc: "Order book depth & trading volume dry up.", 
+          desc: "Order book depth & trading volume drying up.", 
           trigger: "< $15B BTC Volume" 
         },
         { 
           label: "Recursive Leverage", 
           value: false, 
-          desc: "Extreme on-chain or margin debt buildup.", 
+          desc: "Extreme on-chain or exchange margin debt buildup.", 
           trigger: "> 1.0 Funding Rate" 
         },
       ]
