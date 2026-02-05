@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -20,7 +19,9 @@ import {
   BrainCircuit,
   Binary,
   ArrowUpRight,
-  ShieldCheck
+  ShieldCheck,
+  TrendingUp as TrendUpIcon,
+  Skull
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -313,12 +314,12 @@ export default function HistoryPage() {
 
               <div className="grid grid-cols-3 gap-2 pt-2">
                 <div className="text-center p-3 bg-muted/10 rounded-2xl border border-border/40">
-                  <Zap className="w-4 h-4 mx-auto mb-1 text-risk-crash" />
+                  <Skull className="w-4 h-4 mx-auto mb-1 text-risk-crash" />
                   <p className="text-[8px] font-black uppercase text-muted-foreground">Series A</p>
                   <p className="text-[10px] font-bold text-white">Panics</p>
                 </div>
                 <div className="text-center p-3 bg-muted/10 rounded-2xl border border-border/40">
-                  <TrendingUp className="w-4 h-4 mx-auto mb-1 text-secondary" />
+                  <TrendUpIcon className="w-4 h-4 mx-auto mb-1 text-secondary" />
                   <p className="text-[8px] font-black uppercase text-muted-foreground">Series B</p>
                   <p className="text-[10px] font-bold text-white">Good Times</p>
                 </div>
