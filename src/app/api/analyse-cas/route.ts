@@ -45,7 +45,7 @@ export async function POST(req: Request) {
         content.items.map((item: any) => item.str).join(" ") + "\n";
     }
 
-    const result = await analyzeStatement(fullText, password);
+    const result = await analyzeStatement(fullText);
 
     return NextResponse.json(result);
   } catch (error: any) {
