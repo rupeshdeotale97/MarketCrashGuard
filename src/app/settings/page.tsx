@@ -18,12 +18,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
-
 export default function SettingsPage() {
   const [isTrader, setIsTrader] = useState(false);
   const [notifications, setNotifications] = useState(true);
@@ -39,12 +33,6 @@ export default function SettingsPage() {
     if (supporterStatus === 'true') {
       setIsSupporter(true);
     }
-    
-    // Pre-load Razorpay script
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
   }, []);
 
   const handleDonateInitiate = (amount: string) => {
@@ -55,67 +43,25 @@ export default function SettingsPage() {
   const confirmDonation = () => {
     setIsProcessing(true);
 
-    // RAZORPAY INTEGRATION LOGIC:
-    // In a real app, you would:
-    // 1. Create an order on your backend using Razorpay Node SDK.
-    // 2. Pass the order_id here.
+    // RAZORPAY INTEGRATION:
+    // Opening the user's specific Razorpay payment page link.
+    const razorpayLink = 'https://razorpay.me/@poojarupeshdeotale';
     
-    const amountInPaise = parseInt(selectedAmount.replace('$', '')) * 100 * 80; // Approximate USD to INR for Razorpay demo
-
-    const options = {
-      key: "YOUR_RAZORPAY_KEY_ID", // Replace with your actual Key ID from Razorpay Dashboard
-      amount: amountInPaise,
-      currency: "INR",
-      name: "CrashGuard",
-      description: `Support contribution: ${selectedAmount}`,
-      image: "https://picsum.photos/seed/crashguard/200/200",
-      handler: function (response: any) {
-        // Payment successful!
-        setIsSupporter(true);
-        localStorage.setItem('crashguard_supporter', 'true');
-        setIsProcessing(false);
-        setShowDonationDialog(false);
-        
-        toast({
-          title: "Payment Successful",
-          description: `Transaction ID: ${response.razorpay_payment_id}. Thank you for your support!`,
-        });
-      },
-      prefill: {
-        name: "CrashGuard User",
-        email: "user@example.com",
-      },
-      theme: {
-        color: "#6d28d9", // secondary color
-      },
-      modal: {
-        ondismiss: function() {
-          setIsProcessing(false);
-        }
-      }
-    };
-
-    try {
-      if (window.Razorpay) {
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-      } else {
-        // Fallback if script didn't load (Prototype behavior)
-        setTimeout(() => {
-          setIsSupporter(true);
-          localStorage.setItem('crashguard_supporter', 'true');
-          setIsProcessing(false);
-          setShowDonationDialog(false);
-          toast({
-            title: "Simulated Success",
-            description: "Razorpay script was not found, but we've simulated a successful support contribution for this prototype.",
-          });
-        }, 1500);
-      }
-    } catch (e) {
+    window.open(razorpayLink, '_blank');
+    
+    // For prototype/feedback purposes, we simulate the success state 
+    // after the user is redirected to the payment page.
+    setTimeout(() => {
+      setIsSupporter(true);
+      localStorage.setItem('crashguard_supporter', 'true');
       setIsProcessing(false);
-      console.error("Razorpay error:", e);
-    }
+      setShowDonationDialog(false);
+      
+      toast({
+        title: "Redirected to Razorpay",
+        description: "The payment page has been opened in a new tab. Thank you for your voluntary support!",
+      });
+    }, 1200);
   };
 
   return (
@@ -237,7 +183,7 @@ export default function SettingsPage() {
               Contributions are voluntary and keep the app independent. 
               <br/><br/>
               <span className="text-[10px] uppercase font-bold tracking-widest text-secondary">Secure Payment:</span>
-              This transaction is handled securely by Razorpay.
+              This transaction is handled securely via our official Razorpay page.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-col gap-2">
@@ -252,10 +198,10 @@ export default function SettingsPage() {
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Connecting...
+                  Opening Razorpay...
                 </>
               ) : (
-                `Pay ${selectedAmount} via Razorpay`
+                `Support with ${selectedAmount}`
               )}
             </AlertDialogAction>
             <AlertDialogCancel disabled={isProcessing} className="rounded-xl border-border hover:bg-muted/20">Cancel</AlertDialogCancel>
