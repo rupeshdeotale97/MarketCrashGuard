@@ -8,6 +8,7 @@ import {
   Info, 
   FileText, 
   Loader2,
+  Lock,
   FileSearch,
   CheckCircle2,
   X
@@ -15,6 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { getDailyRiskData } from '@/lib/mock-data';
 import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
@@ -34,10 +36,10 @@ export default function ScannerPage() {
   const [cash, setCash] = useState(10);
   const [leverage, setLeverage] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [filePassword, setFilePassword] = useState('');
   
   const marketData = getDailyRiskData();
 
-  // Reset state on unmount or background (session only)
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
@@ -49,22 +51,22 @@ export default function ScannerPage() {
   }, []);
 
   const resetPortfolio = () => {
-    setEquity(50); setDebt(30); setCrypto(10); setCash(10); setLeverage(false);
+    setEquity(50); setDebt(30); setCrypto(10); setCash(10); setLeverage(false); setFilePassword('');
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Support CSV and common text-based formats for analysis
-    const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/plain'];
-    const isCSV = file.name.endsWith('.csv') || file.type === 'text/csv';
+    // Check for CSV or Excel types
+    const isCSV = file.name.toLowerCase().endsWith('.csv');
+    const isExcel = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls');
     
-    if (!isCSV) {
+    if (!isCSV && !isExcel) {
       toast({
         variant: "destructive",
         title: "Unsupported File",
-        description: "Please upload a .CSV export of your statement.",
+        description: "Please upload a .CSV or Excel export.",
       });
       return;
     }
@@ -74,8 +76,8 @@ export default function ScannerPage() {
     reader.onload = async (event) => {
       const textContent = event.target?.result as string;
       try {
-        // AI analyzes the raw CSV text
-        const result = await analyzeStatement(textContent);
+        // AI analyzes the raw content, optionally using the password context
+        const result = await analyzeStatement(textContent, filePassword);
         
         setEquity(Math.round(result.equity));
         setDebt(Math.round(result.debt));
@@ -84,13 +86,13 @@ export default function ScannerPage() {
         
         toast({
           title: "Analysis Complete",
-          description: "Portfolio distribution extracted from CSV.",
+          description: "Portfolio distribution extracted successfully.",
         });
       } catch (error) {
         toast({
           variant: "destructive",
           title: "Analysis Failed",
-          description: "Could not read CSV structure. Please check the file or enter values manually.",
+          description: "Could not read structure. Ensure the password is correct if the file is protected.",
         });
       } finally {
         setIsScanning(false);
@@ -124,7 +126,6 @@ export default function ScannerPage() {
     if (equity + crypto > 60) suggestions.push("In elevated-risk environments, high equity exposure may increase volatility.");
     if (cash < 20) suggestions.push("Higher cash buffers historically help during unstable periods.");
     if (crypto > 15) suggestions.push("Crypto exposure behaves more aggressively during global risk events.");
-    if (marketData.crashConfirmed && status === 'AGGRESSIVE') suggestions.push("During confirmed crashes, capital preservation historically becomes the primary objective.");
     
     return suggestions.length > 0 ? suggestions : ["Your current allocation is within historical safety bounds for this regime."];
   };
@@ -141,8 +142,8 @@ export default function ScannerPage() {
         <p className="text-xs text-muted-foreground font-medium">Evaluate risk alignment with today's market regime.</p>
       </header>
 
-      {/* CSV File Scanner Trigger */}
-      <div className="bg-secondary/5 border border-dashed border-secondary/20 rounded-[2rem] p-6 flex flex-col items-center gap-4 text-center">
+      {/* Upload Module */}
+      <div className="bg-secondary/5 border border-dashed border-secondary/20 rounded-[2rem] p-8 flex flex-col items-center gap-6 text-center">
         <div className="relative">
           <div className={cn(
             "p-4 rounded-full bg-secondary/10 text-secondary transition-all",
@@ -150,31 +151,49 @@ export default function ScannerPage() {
           )}>
             {isScanning ? <Loader2 className="w-8 h-8 animate-spin" /> : <FileText className="w-8 h-8" />}
           </div>
-          {isScanning && (
-            <div className="absolute inset-0 border-2 border-secondary rounded-full animate-ping opacity-20" />
-          )}
         </div>
-        <div className="space-y-1">
-          <h3 className="text-sm font-black text-white">Analyze CSV Statement</h3>
-          <p className="text-[10px] text-muted-foreground font-medium max-w-[200px] mx-auto leading-relaxed">
-            Upload your broker's .CSV export to auto-fill percentages.
-          </p>
+        
+        <div className="w-full max-w-xs space-y-4">
+          <div className="space-y-2">
+            <h3 className="text-sm font-black text-white">Analyze Statement</h3>
+            <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
+              Upload a .CSV or Excel export.
+            </p>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <div className="flex flex-col gap-1.5 text-left">
+              <label className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground ml-1">File Password (Optional)</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                <Input 
+                  type="password"
+                  placeholder="Password for protected file"
+                  value={filePassword}
+                  onChange={(e) => setFilePassword(e.target.value)}
+                  className="pl-9 h-10 rounded-xl bg-background border-border text-xs focus:ring-secondary/20"
+                />
+              </div>
+            </div>
+            
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileUpload} 
+              className="hidden" 
+              accept=".csv,.xlsx,.xls"
+            />
+            
+            <Button 
+              variant="outline" 
+              disabled={isScanning}
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full rounded-xl border-secondary/40 h-12 text-[10px] font-black uppercase tracking-widest hover:bg-secondary/10 shadow-lg"
+            >
+              {isScanning ? "Processing..." : "Select Statement File"}
+            </Button>
+          </div>
         </div>
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          onChange={handleFileUpload} 
-          className="hidden" 
-          accept=".csv"
-        />
-        <Button 
-          variant="outline" 
-          disabled={isScanning}
-          onClick={() => fileInputRef.current?.click()}
-          className="rounded-xl border-secondary/40 h-10 px-6 text-[10px] font-black uppercase tracking-widest hover:bg-secondary/10"
-        >
-          {isScanning ? "Analyzing Data..." : "Select CSV File"}
-        </Button>
       </div>
 
       {/* Evaluation Result */}
@@ -215,7 +234,7 @@ export default function ScannerPage() {
         <div className="space-y-6">
           <AllocationInput label="Equity" value={equity} setValue={setEquity} />
           <AllocationInput label="Debt / Bonds" value={debt} setValue={setDebt} />
-          <AllocationInput label="Crypto" value={crypto} setValue={setEquity} />
+          <AllocationInput label="Crypto" value={crypto} setValue={setCrypto} />
           <AllocationInput label="Cash" value={cash} setValue={setCash} />
         </div>
 

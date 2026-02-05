@@ -16,6 +16,10 @@ const AnalyzeStatementInputSchema = z.object({
     .describe(
       "The raw text content extracted from a financial statement (CSV or exported text)."
     ),
+  password: z
+    .string()
+    .optional()
+    .describe("The password used to unlock the file if it was protected."),
 });
 
 const AnalyzeStatementOutputSchema = z.object({
@@ -38,7 +42,10 @@ const analyzeStatementFlow = ai.defineFlow(
     const { output } = await ai.generate({
       model: 'googleai/gemini-1.5-flash',
       output: { schema: AnalyzeStatementOutputSchema },
-      prompt: `You are a professional financial data analyst. Your goal is to extract asset allocation percentages from the provided CSV or text statement data.
+      prompt: `You are a professional financial data analyst. Your goal is to extract asset allocation percentages from the provided statement data.
+      
+      Note: The file content might be raw text from a CSV or Excel export. 
+      If a password was provided ({{{password}}}), it indicates the file was previously protected.
       
       Analyze the text content for:
       - Equity/Stocks/Mutual Funds (Equity)
@@ -47,14 +54,16 @@ const analyzeStatementFlow = ai.defineFlow(
       - Cash/Bank Balance/Liquidity (Cash)
       
       Guidelines:
-      1. Map the detected assets to the closest category above.
-      2. Ensure the total of percentages is exactly 100%.
-      3. If specific percentages are not explicitly stated, estimate them based on the market value of each line item.
-      4. Disregard any non-portfolio related transactions.
+      1. Map detected assets to the closest category.
+      2. Ensure the total percentage is exactly 100%.
+      3. Estimate based on market values if percentages aren't explicit.
       
       Statement Data:
       {{{fileContent}}}`,
-      input: { fileContent: input.fileContent },
+      input: { 
+        fileContent: input.fileContent,
+        password: input.password || "None provided"
+      },
     });
 
     if (!output) throw new Error('Failed to parse statement content.');
@@ -62,6 +71,6 @@ const analyzeStatementFlow = ai.defineFlow(
   }
 );
 
-export async function analyzeStatement(fileContent: string): Promise<AnalyzeStatementOutput> {
-  return analyzeStatementFlow({ fileContent });
+export async function analyzeStatement(fileContent: string, password?: string): Promise<AnalyzeStatementOutput> {
+  return analyzeStatementFlow({ fileContent, password });
 }
