@@ -14,7 +14,9 @@ import {
   LineChart,
   ArrowRight,
   TrendingUp,
-  BarChart3
+  BarChart3,
+  Info,
+  Waves
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -111,8 +113,9 @@ const bennerCycleData = [
   { year: 2011, level: 50, type: 'Stable', event: 'Eurozone Crisis' },
   { year: 2016, level: 100, type: 'Panic', event: 'China Growth Slowdown' },
   { year: 2021, level: 20, type: 'Hard Times', event: 'Post-COVID Stimulus' },
-  { year: 2026, level: 80, type: 'High Prices', event: 'Future Projection' },
-  { year: 2035, level: 100, type: 'Panic', event: 'Future Cycle' },
+  { year: 2024, level: 60, type: 'Recovery', event: 'Current Regime' },
+  { year: 2026, level: 80, type: 'High Prices', event: 'Projected Cycle High' },
+  { year: 2035, level: 100, type: 'Panic', event: 'Estimated Next Panic' },
 ];
 
 export default function HistoryPage() {
@@ -269,7 +272,7 @@ export default function HistoryPage() {
                 <span className="text-[10px] font-black uppercase text-secondary tracking-widest">Est. 1875 Analysis</span>
                 <h2 className="text-2xl font-black text-white">Samuel Benner Cycle</h2>
                 <p className="text-xs text-muted-foreground leading-relaxed font-medium italic">
-                  "History repeats itself in rhythmic cycles of panic and prosperity."
+                  "Mapping the rhythmic waves of pig iron prices and market panic."
                 </p>
               </div>
 
@@ -304,23 +307,69 @@ export default function HistoryPage() {
                 </ChartContainer>
               </div>
 
+              {/* Benner Legend */}
               <div className="grid grid-cols-3 gap-2 pt-2">
                 <div className="text-center p-3 bg-muted/10 rounded-2xl border border-border/40">
                   <Zap className="w-4 h-4 mx-auto mb-1 text-risk-crash" />
-                  <p className="text-[8px] font-black uppercase text-muted-foreground">Panics</p>
-                  <p className="text-[10px] font-bold text-white">Peak Cycles</p>
+                  <p className="text-[8px] font-black uppercase text-muted-foreground">Series A</p>
+                  <p className="text-[10px] font-bold text-white">Panics</p>
                 </div>
                 <div className="text-center p-3 bg-muted/10 rounded-2xl border border-border/40">
                   <TrendingUp className="w-4 h-4 mx-auto mb-1 text-secondary" />
-                  <p className="text-[8px] font-black uppercase text-muted-foreground">Highs</p>
-                  <p className="text-[10px] font-bold text-white">Sell Signal</p>
+                  <p className="text-[8px] font-black uppercase text-muted-foreground">Series B</p>
+                  <p className="text-[10px] font-bold text-white">Good Times</p>
                 </div>
                 <div className="text-center p-3 bg-muted/10 rounded-2xl border border-border/40">
                   <TrendingDown className="w-4 h-4 mx-auto mb-1 text-risk-low" />
-                  <p className="text-[8px] font-black uppercase text-muted-foreground">Lows</p>
-                  <p className="text-[10px] font-bold text-white">Buy Signal</p>
+                  <p className="text-[8px] font-black uppercase text-muted-foreground">Series C</p>
+                  <p className="text-[10px] font-bold text-white">Hard Times</p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Cycle Anatomy Details */}
+          <div className="bg-muted/10 rounded-3xl p-6 border border-border space-y-4">
+            <div className="flex items-center gap-2">
+              <Waves className="w-4 h-4 text-secondary" />
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-white">Cycle Anatomy (1875)</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full bg-risk-crash/20 flex items-center justify-center shrink-0 font-black text-xs text-risk-crash">A</div>
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-white">The Panic Cycle</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">Occurs in a 16-18-20 year sequence. These are periods of extreme speculative excess followed by sudden systemic collapse.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center shrink-0 font-black text-xs text-secondary">B</div>
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-white">The High Price Cycle</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">Repeats every 8-9-10 years. This marks the peak of commercial activity where assets should be sold for cash.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full bg-risk-low/20 flex items-center justify-center shrink-0 font-black text-xs text-risk-low">C</div>
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-white">The Hard Times Cycle</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">The bottom of the 16-18-20 year trend. This is the optimal accumulation zone for generational wealth building.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Pig Iron Detail */}
+          <div className="bg-card border border-border rounded-2xl p-5 flex items-start gap-4">
+            <div className="p-3 bg-background rounded-xl border border-border">
+              <LineChart className="w-5 h-5 text-secondary" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Historical Basis</p>
+              <p className="text-xs font-bold text-white">The Pig Iron Correlation</p>
+              <p className="text-[10px] text-muted-foreground leading-relaxed italic">
+                Benner discovered that the price of pig iron—a fundamental industrial input—behaved in rhythmic 11-year cycles, which accurately predicted the stock market panics of 1819, 1837, 1857, and 1873.
+              </p>
             </div>
           </div>
 
@@ -332,10 +381,10 @@ export default function HistoryPage() {
             
             <div className="space-y-3">
               {[
-                { year: "2007-2008", cycle: "High to Panic", result: "Cycle completed with GFC collapse.", color: "text-risk-crash" },
-                { year: "2016-2017", cycle: "Panic Phase", result: "Oil & Emerging Market volatility spike.", color: "text-risk-elevated" },
-                { year: "2021-2022", cycle: "Hard Times", result: "Post-stimulus deleveraging cycle.", color: "text-risk-high" },
-                { year: "2024-2025", cycle: "Accumulation", result: "Benner prediction: Transition to high.", color: "text-risk-low" }
+                { year: "2007-2008", cycle: "High to Panic", result: "Series B (High) led to Series A (Panic) crash.", color: "text-risk-crash" },
+                { year: "2020-2021", cycle: "Panic Phase", result: "COVID liquidity shock matched panic rhythm.", color: "text-risk-elevated" },
+                { year: "2022-2023", cycle: "Hard Times", result: "Series C (Low) accumulation phase.", color: "text-risk-high" },
+                { year: "2024-2026", cycle: "Accumulation", result: "Current: Transition from hard times to high.", color: "text-risk-low" }
               ].map((cor, i) => (
                 <div key={i} className="bg-card border border-border rounded-2xl p-4 flex justify-between items-center group hover:border-secondary/30 transition-all">
                   <div className="flex flex-col gap-0.5">
