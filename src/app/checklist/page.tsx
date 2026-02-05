@@ -14,7 +14,8 @@ import {
   TrendingDown,
   MousePointer2,
   Flag,
-  LineChart
+  LineChart,
+  ArrowRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -86,7 +87,6 @@ export default function ChecklistPage() {
       if (!mounted) return;
       setFetching(true);
       try {
-        // Fetch Crypto Data with shorter timeout
         const cryptoResponse = await fetch('https://api.coincap.io/v2/assets?limit=8', {
           signal: AbortSignal.timeout(4000) 
         });
@@ -107,7 +107,6 @@ export default function ChecklistPage() {
             const ethChange = parseFloat(eth?.changePercent24Hr || '0');
             const volume24h = parseFloat(btc?.volumeUsd24Hr || '0') / 1e9;
 
-            // Update Indices with small random variations based on "real" crypto move for feel
             const gData = [
               { name: 'S&P500', change: -0.85 + (Math.random() * 0.4), fill: '' },
               { name: 'NIFTY', change: 1.2 + (Math.random() * 0.5), fill: '' },
@@ -133,7 +132,7 @@ export default function ChecklistPage() {
           }
         }
       } catch (error) {
-        // Silent fail - we already have defaults/previous data
+        // Silent fail
       } finally {
         if (mounted) setFetching(false);
       }
@@ -153,10 +152,48 @@ export default function ChecklistPage() {
   const crashConfirmed = baseData.factors.creditStress || volatilitySpike || liquidityShock || baseData.factors.externalShock;
 
   const checklistItems = [
-    { label: "Credit Stress", value: baseData.factors.creditStress, desc: "Banking sector yield spreads.", trigger: "> 2.5% Spread" },
-    { label: "Volatility Spike", value: volatilitySpike, desc: "Extreme price movement detected.", trigger: "> 4% BTC / 2% SPX" },
-    { label: "Liquidity Shock", value: liquidityShock, desc: "Low trading volume across assets.", trigger: "< $15B BTC Volume" },
-    { label: "External Shock", value: baseData.factors.externalShock, desc: "Geopolitical or macro events.", trigger: "Manual Override" },
+    { 
+      label: "Systemic Credit Stress", 
+      value: baseData.factors.creditStress, 
+      desc: "Interbank counterparty risk & bond spreads.", 
+      trigger: "> 300bps TED Spread" 
+    },
+    { 
+      label: "Volatility Implosion", 
+      value: volatilitySpike, 
+      desc: "VIX spikes or extreme asset price deviation.", 
+      trigger: "> 35 VIX / 5% BTC" 
+    },
+    { 
+      label: "Liquidity Evaporation", 
+      value: liquidityShock, 
+      desc: "Order book depth & trading volume dry up.", 
+      trigger: "< $15B BTC Volume" 
+    },
+    { 
+      label: "Dollar Wrecking Ball", 
+      value: false, 
+      desc: "DXY strength draining global risk liquidity.", 
+      trigger: "DXY > 105.00" 
+    },
+    { 
+      label: "Yield Curve Inversion", 
+      value: true, 
+      desc: "Recessionary signal from bond market.", 
+      trigger: "10Y-2Y < -0.5%" 
+    },
+    { 
+      label: "Recursive Leverage", 
+      value: false, 
+      desc: "Extreme on-chain or margin debt buildup.", 
+      trigger: "> 1.0 Funding Rate" 
+    },
+    { 
+      label: "External Macro Shock", 
+      value: baseData.factors.externalShock, 
+      desc: "Geopolitical events or central bank pivots.", 
+      trigger: "Manual Protocol IV" 
+    },
   ];
 
   const chartConfig = {
@@ -275,21 +312,21 @@ export default function ChecklistPage() {
         <div className="divide-y divide-border">
           {checklistItems.map((item, i) => (
             <div key={i} className="px-6 py-5 flex items-center justify-between group transition-all hover:bg-muted/10">
-              <div className="flex flex-col gap-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-lg leading-none">{item.label}</span>
-                  <Badge variant="outline" className="text-[9px] font-bold h-4 py-0 text-muted-foreground/60">{item.trigger}</Badge>
+              <div className="flex flex-col gap-0.5 max-w-[75%]">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-[15px] leading-tight text-white">{item.label}</span>
+                  <Badge variant="outline" className="text-[8px] font-black h-4 py-0 border-white/10 text-muted-foreground/60 uppercase tracking-tighter shrink-0">{item.trigger}</Badge>
                 </div>
-                <span className="text-xs text-muted-foreground font-medium">{item.desc}</span>
+                <span className="text-[11px] text-muted-foreground font-medium leading-tight">{item.desc}</span>
               </div>
-              <div className="shrink-0">
+              <div className="shrink-0 ml-4">
                 {item.value ? (
                   <div className="relative">
-                    <XCircle className="w-8 h-8 text-risk-crash" />
+                    <XCircle className="w-7 h-7 text-risk-crash" />
                     <div className="absolute inset-0 animate-ping rounded-full bg-risk-crash/20" />
                   </div>
                 ) : (
-                  <CheckCircle2 className="w-8 h-8 text-risk-low opacity-40 group-hover:opacity-100 transition-opacity" />
+                  <CheckCircle2 className="w-7 h-7 text-risk-low opacity-30 group-hover:opacity-100 transition-opacity" />
                 )}
               </div>
             </div>
