@@ -13,7 +13,10 @@ import {
   ShieldCheck,
   Mountain,
   Flame,
-  Droplets
+  Droplets,
+  Info,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
@@ -65,7 +68,6 @@ export default function LiveSignalsPage() {
         { name: 'Brent Oil', region: 'ICE', price: '$82.15', change: -1.4 + (Math.random() * 0.4), type: 'commodity', signal: 'BEARISH' },
         { name: 'Natural Gas', region: 'NYMEX', price: '$2.15', change: -3.2 + (Math.random() * 1.2), type: 'commodity', signal: 'CRASH' },
         { name: 'Copper', region: 'COMEX', price: '$4.52', change: -0.2 + (Math.random() * 0.1), type: 'commodity', signal: 'NEUTRAL' },
-        { name: 'Platinum', region: 'NYMEX', price: '$945.00', change: 0.4 + (Math.random() * 0.2), type: 'commodity', signal: 'NEUTRAL' },
       ];
 
       try {
@@ -148,6 +150,13 @@ export default function LiveSignalsPage() {
     );
   }
 
+  const sections = [
+    { title: 'Global Indices', type: 'global', icon: <Globe className="w-4 h-4 text-blue-500" />, interpretation: "Western markets are showing mixed signals as inflation data looms. Asian indices (specifically Hang Seng) are under extreme liquidity pressure, suggesting a localized contagion risk rather than a global systemic collapse." },
+    { title: 'India Domestic', type: 'india', icon: <Flag className="w-4 h-4 text-orange-500" />, interpretation: "Indian benchmarks remain structurally resilient. BANKNIFTY is outperforming the broader NIFTY 50, indicating strong domestic credit health and institutional rotation into financials despite global high-beta selling." },
+    { title: 'Commodity Benchmarks', type: 'commodity', icon: <Mountain className="w-4 h-4 text-yellow-600" />, interpretation: "Gold and Silver are successfully acting as safe harbors. The spike in precious metals alongside declining energy prices (Oil) signals a transition from growth-driven inflation to defensive stagflation positioning." },
+    { title: 'Crypto Velocity', type: 'crypto', icon: <Coins className="w-4 h-4 text-secondary" />, interpretation: "BTC is consolidating within a narrow range, showing lower relative volatility than tech equities. This 'quiet' phase in crypto often precedes a large liquidity move. Watch for a break above $65k or below $62k as a systemic lead indicator." },
+  ];
+
   return (
     <div className="flex flex-col gap-6 px-5 pt-8 pb-12">
       <header className="flex justify-between items-start">
@@ -186,17 +195,18 @@ export default function LiveSignalsPage() {
 
       {/* Index Lists */}
       <div className="space-y-10">
-        {[
-          { title: 'Global Indices', type: 'global', icon: <Globe className="w-4 h-4 text-blue-500" /> },
-          { title: 'India Domestic', type: 'india', icon: <Flag className="w-4 h-4 text-orange-500" /> },
-          { title: 'Commodity Benchmarks', type: 'commodity', icon: <Mountain className="w-4 h-4 text-yellow-600" /> },
-          { title: 'Crypto Velocity', type: 'crypto', icon: <Coins className="w-4 h-4 text-secondary" /> },
-        ].map((section) => (
+        {sections.map((section) => (
           <div key={section.type} className="space-y-4">
-            <div className="flex items-center gap-2 px-1">
-              {section.icon}
-              <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">{section.title}</h3>
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                {section.icon}
+                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">{section.title}</h3>
+              </div>
+              <Badge variant="outline" className="text-[8px] font-bold border-white/5 opacity-50">
+                {data.filter(d => d.type === section.type as any).length} ASSETS
+              </Badge>
             </div>
+            
             <div className="space-y-3">
               {data.filter(d => d.type === section.type as any).map((item, i) => (
                 <div key={i} className="bg-card border border-border rounded-2xl p-5 flex justify-between items-center group transition-all hover:border-secondary/30">
@@ -224,34 +234,45 @@ export default function LiveSignalsPage() {
                 </div>
               ))}
             </div>
+
+            {/* Systemic Interpretation Card */}
+            <div className="bg-muted/10 rounded-2xl border border-border/40 p-5 mt-4 group hover:border-secondary/20 transition-all">
+              <div className="flex items-center gap-2 mb-3">
+                <Info className="w-3.5 h-3.5 text-secondary" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary">Systemic Interpretation</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed font-medium italic">
+                {section.interpretation}
+              </p>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="bg-secondary/10 border border-secondary/20 rounded-[2rem] p-6 space-y-4">
+      <div className="bg-secondary/10 border-2 border-secondary/20 rounded-[2.5rem] p-8 space-y-6 mt-6">
         <div className="flex items-center gap-3">
-          <Zap className="w-5 h-5 text-secondary" />
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-white">Systemic Interpretation</h3>
+          <Layers className="w-6 h-6 text-secondary" />
+          <h3 className="text-sm font-black uppercase tracking-widest text-white">Aggregated Intelligence Summary</h3>
         </div>
-        <div className="grid grid-cols-1 gap-4">
-          <div className="flex items-start gap-4">
-            <div className="p-2 bg-secondary/20 rounded-xl">
-              <ShieldCheck className="w-5 h-5 text-secondary" />
+        <div className="space-y-4">
+          <p className="text-xs leading-relaxed text-muted-foreground font-medium">
+            The current global regime is characterized by <strong className="text-white">fragmented liquidity</strong>. While Indian and US benchmarks show relative stability, the extreme bearish signals in Commodities like Natural Gas and Asian indices suggest that the "Risk-Off" sentiment is currently migrating toward emerging markets and energy cycles.
+          </p>
+          <div className="pt-4 flex flex-col gap-3">
+            <div className="flex items-center gap-3 bg-background/50 p-3 rounded-xl border border-white/5">
+              <div className="w-2 h-2 rounded-full bg-risk-low animate-pulse" />
+              <span className="text-[11px] font-bold text-white">Dominant Theme: Sector Rotation into Financials (India)</span>
             </div>
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-white">Signal Status: {getSentimentScore() > 50 ? 'Constructive' : 'Defensive'}</p>
-              <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
-                {getSentimentScore() > 50 
-                  ? "Commodities like Gold showing strength alongside stable indices suggest a healthy inflationary expansion. Market participation is broadening."
-                  : "Safe havens are outperforming risk assets. Global correlation is tightening towards the downside. Liquidity preservation is priority #1."}
-              </p>
+            <div className="flex items-center gap-3 bg-background/50 p-3 rounded-xl border border-white/5">
+              <div className="w-2 h-2 rounded-full bg-risk-high animate-pulse" />
+              <span className="text-[11px] font-bold text-white">Danger Zone: Commodity Deflation (Industrial Sinks)</span>
             </div>
           </div>
         </div>
       </div>
 
-      <footer className="mt-4 px-2 text-center">
-        <p className="text-[9px] text-muted-foreground/30 font-bold uppercase tracking-[0.4em]">Real-time Feed • Quantitative Bias</p>
+      <footer className="mt-8 px-2 text-center opacity-40">
+        <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-[0.4em]">Institutional Intelligence • Quantitative Analysis Only</p>
       </footer>
     </div>
   );
