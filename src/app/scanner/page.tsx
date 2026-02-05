@@ -1,22 +1,40 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { ShieldCheck, AlertTriangle, HelpCircle, ArrowRight, Info } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { 
+  ShieldCheck, 
+  AlertTriangle, 
+  HelpCircle, 
+  ArrowRight, 
+  Info, 
+  Upload, 
+  FileSearch, 
+  Loader2,
+  CheckCircle2,
+  X
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { getDailyRiskData } from '@/lib/mock-data';
 import { Badge } from "@/components/ui/badge";
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { analyzeStatement } from '@/ai/flows/analyze-statement-flow';
 
 type AlignmentStatus = 'ALIGNED' | 'AGGRESSIVE' | 'DEFENSIVE';
 
 export default function ScannerPage() {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   // STRICT PRIVACY: State only, no persistence
   const [equity, setEquity] = useState(50);
   const [debt, setDebt] = useState(30);
   const [crypto, setCrypto] = useState(10);
   const [cash, setCash] = useState(10);
   const [leverage, setLeverage] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   
   const marketData = getDailyRiskData();
 
@@ -24,12 +42,59 @@ export default function ScannerPage() {
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
-        setEquity(50); setDebt(30); setCrypto(10); setCash(10); setLeverage(false);
+        resetPortfolio();
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
+
+  const resetPortfolio = () => {
+    setEquity(50); setDebt(30); setCrypto(10); setCash(10); setLeverage(false);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        variant: "destructive",
+        title: "Unsupported File",
+        description: "Please upload an image of your statement (JPG, PNG).",
+      });
+      return;
+    }
+
+    setIsScanning(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const dataUri = event.target?.result as string;
+      try {
+        const result = await analyzeStatement(dataUri);
+        
+        setEquity(Math.round(result.equity));
+        setDebt(Math.round(result.debt));
+        setCrypto(Math.round(result.crypto));
+        setCash(Math.round(result.cash));
+        
+        toast({
+          title: "Scan Complete",
+          description: "Portfolio data extracted successfully.",
+        });
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Scan Failed",
+          description: "Could not read statement. Please enter values manually.",
+        });
+      } finally {
+        setIsScanning(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const calculateAlignment = (): AlignmentStatus => {
     const highRiskExposure = equity + crypto;
@@ -71,6 +136,42 @@ export default function ScannerPage() {
         <h1 className="text-3xl font-black tracking-tight text-white mt-1">Portfolio Scanner</h1>
         <p className="text-xs text-muted-foreground font-medium">Evaluate risk alignment with today's market regime.</p>
       </header>
+
+      {/* CAS File Scanner Trigger */}
+      <div className="bg-secondary/5 border border-dashed border-secondary/20 rounded-[2rem] p-6 flex flex-col items-center gap-4 text-center">
+        <div className="relative">
+          <div className={cn(
+            "p-4 rounded-full bg-secondary/10 text-secondary transition-all",
+            isScanning && "animate-pulse scale-110 bg-secondary/20"
+          )}>
+            {isScanning ? <Loader2 className="w-8 h-8 animate-spin" /> : <FileSearch className="w-8 h-8" />}
+          </div>
+          {isScanning && (
+            <div className="absolute inset-0 border-2 border-secondary rounded-full animate-ping opacity-20" />
+          )}
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-sm font-black text-white">Scan Statement (CAS)</h3>
+          <p className="text-[10px] text-muted-foreground font-medium max-w-[200px] mx-auto leading-relaxed">
+            Upload an image of your statement to auto-fill percentages.
+          </p>
+        </div>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          onChange={handleFileUpload} 
+          className="hidden" 
+          accept="image/*"
+        />
+        <Button 
+          variant="outline" 
+          disabled={isScanning}
+          onClick={() => fileInputRef.current?.click()}
+          className="rounded-xl border-secondary/40 h-10 px-6 text-[10px] font-black uppercase tracking-widest hover:bg-secondary/10"
+        >
+          {isScanning ? "Analyzing..." : "Select Image"}
+        </Button>
+      </div>
 
       {/* Evaluation Result */}
       <div className={cn(
