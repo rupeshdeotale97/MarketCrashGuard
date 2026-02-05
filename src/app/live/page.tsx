@@ -55,6 +55,7 @@ export default function LiveSignalsPage() {
 
         // Indian Markets
         { name: 'NIFTY 50', region: 'India', price: '22,450.25', change: 0.32 + (Math.random() * 0.1), type: 'india', signal: 'BULLISH' },
+        { name: 'BANKNIFTY', region: 'India', price: '48,120.40', change: 0.45 + (Math.random() * 0.2), type: 'india', signal: 'BULLISH' },
         { name: 'SENSEX', region: 'India', price: '73,890.15', change: 0.28 + (Math.random() * 0.1), type: 'india', signal: 'BULLISH' },
       ];
 
