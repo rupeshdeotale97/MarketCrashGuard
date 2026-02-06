@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getDailyRiskData } from '@/lib/mock-data';
 import { RiskCard } from '@/components/risk-card';
-import { AlertTriangle, ShieldCheck, Calendar, Info, Zap, Scan, ArrowRight } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, Calendar, Info, Zap, Compass, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { useRouter } from 'next/navigation';
@@ -12,7 +12,6 @@ export default function DashboardPage() {
   const [today, setToday] = useState<string>("");
   const data = getDailyRiskData();
   const router = useRouter();
-
   useEffect(() => {
     setToday(new Date().toLocaleDateString('en-US', {
       weekday: 'long',
@@ -58,18 +57,17 @@ export default function DashboardPage() {
         <RiskCard label="Global System" status={data.globalRisk} />
       </div>
 
-      {/* Portfolio Scanner Entry */}
-      <button 
+      <button
         onClick={() => router.push('/scanner')}
         className="bg-secondary/10 border border-secondary/30 rounded-[2rem] p-6 flex items-center justify-between group transition-all hover:bg-secondary/20"
       >
         <div className="flex items-center gap-4">
           <div className="p-3 bg-secondary/20 rounded-2xl text-secondary">
-            <Scan className="w-6 h-6" />
+            <Compass className="w-6 h-6" />
           </div>
           <div className="text-left">
             <h3 className="font-black text-sm text-white">Portfolio Scanner</h3>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Analyze Alignment</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Diversify Smarter</p>
           </div>
         </div>
         <ArrowRight className="w-5 h-5 text-secondary group-hover:translate-x-1 transition-transform" />
