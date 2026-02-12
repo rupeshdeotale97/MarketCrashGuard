@@ -1,22 +1,41 @@
 "use client";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { 
-  BookOpen, 
-  ShieldAlert, 
-  XCircle, 
-  CheckCircle2, 
-  AlertCircle, 
-  Zap, 
-  TrendingUp, 
-  Layers, 
+import {
+  ArrowRightCircle,
+  BookOpen,
+  BrainCircuit,
+  CheckCircle2,
   Clock,
-  ArrowRightCircle
-} from 'lucide-react';
+  Gauge,
+  Layers,
+  ShieldAlert,
+  Siren,
+  TrendingUp,
+  XCircle,
+  Zap,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const playbooks = [
+type Playbook = {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  riskLevel: "CRITICAL" | "EXTREME" | "SYSTEMIC";
+  precedents: string;
+  whatToDo: string[];
+  whatNotToDo: string[];
+  survivalChecklist: string[];
+  recoverySignals: string[];
+  first24h: string[];
+  monitorNow: string[];
+  correlation: string;
+  duration: string;
+};
+
+const playbooks: Playbook[] = [
   {
     id: "equity",
     title: "Equity Market Crash",
@@ -27,25 +46,31 @@ const playbooks = [
     whatToDo: [
       "Move to defensive sectors (Utilities, Healthcare)",
       "Rebalance into high-quality dividend payers",
-      "Monitor the 200-day moving average daily"
+      "Monitor the 200-day moving average daily",
     ],
     whatNotToDo: [
       "Panic sell fundamentally strong companies",
       "Average down on high-beta tech stocks",
-      "Ignore rising credit default swaps (CDS)"
+      "Ignore rising credit default swaps (CDS)",
     ],
     survivalChecklist: [
       "Verify 6-month cash runway",
       "Audit all margin/leverage positions",
-      "Set hard stop-losses on speculative tiers"
+      "Set hard stop-losses on speculative tiers",
     ],
     recoverySignals: [
       "VIX volatility index drops below 20",
       "Credit spreads begin to narrow for 3 consecutive weeks",
-      "Central bank pivot or liquidity injection confirmed"
+      "Central bank pivot or liquidity injection confirmed",
     ],
+    first24h: [
+      "Pause all discretionary buys for one session",
+      "Validate stop-loss placement for leveraged positions",
+      "Rotate 5-10% into cash or short-duration debt",
+    ],
+    monitorNow: ["VIX", "CDS spreads", "10Y UST yield", "USD/INR volatility"],
     correlation: "Highly correlated to High-Yield Debt and Crypto.",
-    duration: "6 to 18 months."
+    duration: "6 to 18 months.",
   },
   {
     id: "crypto",
@@ -57,25 +82,31 @@ const playbooks = [
     whatToDo: [
       "Move assets to cold storage immediately",
       "Consolidate into BTC and ETH dominance",
-      "Check stablecoin collateral transparency"
+      "Check stablecoin collateral transparency",
     ],
     whatNotToDo: [
       "Chasing 'dead cat bounces' with leverage",
       "Keeping funds on smaller, off-shore exchanges",
-      "Panic swapping into unverified algorithmic stables"
+      "Panic swapping into unverified algorithmic stables",
     ],
     survivalChecklist: [
       "Revoke all unnecessary smart contract permissions",
       "Check hardware wallet firmware updates",
-      "Monitor exchange inflow/outflow data"
+      "Monitor exchange inflow/outflow data",
     ],
     recoverySignals: [
       "Exchange stablecoin reserves begin to rise",
       "Funding rates reset to neutral or negative",
-      "On-chain 'Realized Cap' stabilizes"
+      "On-chain 'Realized Cap' stabilizes",
     ],
+    first24h: [
+      "Move critical holdings to self-custody wallets",
+      "Reduce altcoin risk concentration by 20-30%",
+      "Disable exchange API keys not in active use",
+    ],
+    monitorNow: ["Exchange reserves", "Funding rates", "Stablecoin peg", "BTC dominance"],
     correlation: "Strongly tied to Nasdaq (QQQ) and USD Index (DXY).",
-    duration: "3 to 9 months of high intensity."
+    duration: "3 to 9 months of high intensity.",
   },
   {
     id: "liquidity",
@@ -87,29 +118,39 @@ const playbooks = [
     whatToDo: [
       "Cash is the only safe harbor - raise liquidity",
       "Short-term government bonds (T-Bills)",
-      "Wait for the 'Volatile Washout' candle"
+      "Wait for the 'Volatile Washout' candle",
     ],
     whatNotToDo: [
       "Buying the first 10% dip",
       "Fighting the Federal Reserve/Central Banks",
-      "Assuming 'Safe Havens' will hold early on"
+      "Assuming 'Safe Havens' will hold early on",
     ],
     survivalChecklist: [
       "Calculate liquidation price on all loans",
       "Consolidate multiple brokerage accounts",
-      "Identify the 'Bottom Fish' list for later"
+      "Identify the 'Bottom Fish' list for later",
     ],
     recoverySignals: [
       "USD Index (DXY) begins to weaken significantly",
       "Repo market rates return to normal levels",
-      "Gold begins to out-perform equities again"
+      "Gold begins to out-perform equities again",
     ],
+    first24h: [
+      "Raise emergency liquidity to cover 3 months expenses",
+      "Close weakest positions with poor balance-sheet quality",
+      "Set staged buy levels instead of market orders",
+    ],
+    monitorNow: ["DXY", "Repo stress", "Bid-ask spread", "HY credit spread"],
     correlation: "Inverse to the US Dollar; matches all risk assets.",
-    duration: "Short but violent (1 to 4 months)."
-  }
+    duration: "Short but violent (1 to 4 months).",
+  },
 ];
 
 export default function PlaybooksPage() {
+  const severeCount = playbooks.filter(
+    (book) => book.riskLevel === "EXTREME" || book.riskLevel === "CRITICAL"
+  ).length;
+
   return (
     <div className="flex flex-col gap-6 px-5 pt-8 pb-12">
       <header className="flex flex-col gap-1">
@@ -122,20 +163,49 @@ export default function PlaybooksPage() {
         <p className="text-sm text-muted-foreground font-medium">Professional guidance for extreme market regimes.</p>
       </header>
 
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-[1.75rem] border border-secondary/20 bg-secondary/10 p-5 space-y-2">
+          <div className="flex items-center gap-2">
+            <BrainCircuit className="w-4 h-4 text-secondary" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Library Feature</p>
+          </div>
+          <p className="text-white font-black text-base">Scenario Intelligence</p>
+          <p className="text-[11px] text-muted-foreground">Each playbook now includes first-24h actions and live risk monitors.</p>
+        </div>
+        <div className="rounded-[1.75rem] border border-border bg-card p-5 space-y-2">
+          <div className="flex items-center gap-2">
+            <Gauge className="w-4 h-4 text-secondary" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Coverage</p>
+          </div>
+          <p className="text-white font-black text-base">{playbooks.length} crisis playbooks</p>
+          <p className="text-[11px] text-muted-foreground">Built for equity, liquidity, and digital-asset stress cycles.</p>
+        </div>
+        <div className="rounded-[1.75rem] border border-risk-crash/30 bg-risk-crash/10 p-5 space-y-2">
+          <div className="flex items-center gap-2">
+            <Siren className="w-4 h-4 text-risk-crash" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Risk Radar</p>
+          </div>
+          <p className="text-white font-black text-base">{severeCount} high-severity regimes</p>
+          <p className="text-[11px] text-muted-foreground">Fast triage guidance for the highest drawdown environments.</p>
+        </div>
+      </div>
+
       <div className="space-y-4">
         <Accordion type="single" collapsible className="w-full space-y-4">
           {playbooks.map((book) => (
-            <AccordionItem 
-              key={book.id} 
-              value={book.id} 
+            <AccordionItem
+              key={book.id}
+              value={book.id}
               className="border rounded-[2rem] bg-card px-0 overflow-hidden border-border transition-all hover:border-secondary/30 shadow-2xl"
             >
               <AccordionTrigger className="hover:no-underline py-6 px-6">
                 <div className="flex items-center gap-4 text-left">
-                  <div className={cn(
-                    "p-3 rounded-2xl shrink-0",
-                    book.riskLevel === 'EXTREME' ? "bg-risk-crash/10 text-risk-crash" : "bg-secondary/10 text-secondary"
-                  )}>
+                  <div
+                    className={cn(
+                      "p-3 rounded-2xl shrink-0",
+                      book.riskLevel === "EXTREME" ? "bg-risk-crash/10 text-risk-crash" : "bg-secondary/10 text-secondary"
+                    )}
+                  >
                     <Zap className="w-6 h-6" />
                   </div>
                   <div className="flex flex-col gap-0.5">
@@ -149,17 +219,16 @@ export default function PlaybooksPage() {
                   </div>
                 </div>
               </AccordionTrigger>
+
               <AccordionContent className="pb-8 px-6 space-y-8">
-                {/* Executive Summary */}
                 <div className="bg-muted/20 rounded-2xl p-4 border border-border/40">
                   <p className="text-xs text-muted-foreground leading-relaxed italic">
-                    <span className="text-white font-bold not-italic mr-1">Context:</span> 
+                    <span className="text-white font-bold not-italic mr-1">Context:</span>
                     {book.description} Historical precedents include {book.precedents}.
                   </p>
                 </div>
 
-                {/* Strategy Grid */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-risk-low border-b border-risk-low/10 pb-2">
                       <CheckCircle2 className="w-4 h-4" />
@@ -168,7 +237,7 @@ export default function PlaybooksPage() {
                     <ul className="space-y-2">
                       {book.whatToDo.map((item, i) => (
                         <li key={i} className="flex gap-2 text-[11px] font-semibold text-white/80 leading-tight">
-                          <span className="text-risk-low">→</span> {item}
+                          <span className="text-risk-low">-&gt;</span> {item}
                         </li>
                       ))}
                     </ul>
@@ -181,14 +250,38 @@ export default function PlaybooksPage() {
                     <ul className="space-y-2">
                       {book.whatNotToDo.map((item, i) => (
                         <li key={i} className="flex gap-2 text-[11px] font-semibold text-white/80 leading-tight">
-                          <span className="text-risk-crash">✕</span> {item}
+                          <span className="text-risk-crash">x</span> {item}
                         </li>
                       ))}
                     </ul>
                   </div>
                 </div>
 
-                {/* Premium Intelligence Sections */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="bg-muted/10 border border-border/30 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-secondary" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-secondary">First 24 Hours</span>
+                    </div>
+                    {book.first24h.map((step, i) => (
+                      <p key={i} className="text-[11px] text-white/80 leading-snug">{step}</p>
+                    ))}
+                  </div>
+                  <div className="bg-muted/10 border border-border/30 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 text-secondary" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-secondary">Monitor Now</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {book.monitorNow.map((signal, i) => (
+                        <Badge key={i} variant="outline" className="text-[9px] uppercase tracking-widest border-white/10 text-muted-foreground">
+                          {signal}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-4 pt-2">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-secondary" />
@@ -204,7 +297,6 @@ export default function PlaybooksPage() {
                   </div>
                 </div>
 
-                {/* Survival Checklist & Macro Data */}
                 <div className="grid grid-cols-1 gap-4">
                   <div className="bg-secondary/5 border border-secondary/20 rounded-2xl p-5 space-y-4">
                     <div className="flex items-center gap-2 mb-2">
@@ -240,10 +332,10 @@ export default function PlaybooksPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <button className="w-full bg-secondary/10 hover:bg-secondary/20 border border-secondary/30 rounded-xl py-3 text-[10px] font-black uppercase tracking-[0.2em] text-secondary flex items-center justify-center gap-2 transition-all">
                   <ArrowRightCircle className="w-4 h-4" />
-                  Mark as Read & Understood
+                  Mark as Read and Understood
                 </button>
               </AccordionContent>
             </AccordionItem>
@@ -259,7 +351,7 @@ export default function PlaybooksPage() {
           <p className="text-[10px] text-muted-foreground leading-relaxed font-bold italic">
             "The goal of the playbook is not to predict the rain, but to build an ark before it starts."
           </p>
-          <span className="text-[8px] uppercase font-black tracking-widest text-muted-foreground/30">— Risk Management Axiom</span>
+          <span className="text-[8px] uppercase font-black tracking-widest text-muted-foreground/30">- Risk Management Axiom</span>
         </div>
       </div>
     </div>

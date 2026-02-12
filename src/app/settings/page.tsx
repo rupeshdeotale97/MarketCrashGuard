@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
-import { User, Bell, ShieldAlert, Heart, Coffee, Star, Loader2, Shield } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Bell, Heart, Coffee, Star, Loader2, Shield, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -20,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function SettingsPage() {
-  const [isTrader, setIsTrader] = useState(false);
+  const supportEmail = 'rupesh.deotal@gmail.com';
   const [notifications, setNotifications] = useState(false);
   const [isSupporter, setIsSupporter] = useState(false);
   const [showDonationDialog, setShowDonationDialog] = useState(false);
@@ -35,20 +34,7 @@ export default function SettingsPage() {
     
     const notificationPref = localStorage.getItem('crashguard_notifications');
     if (notificationPref === 'true') setNotifications(true);
-
-    const modePref = localStorage.getItem('crashguard_mode');
-    if (modePref === 'trader') setIsTrader(true);
   }, []);
-
-  const handleModeToggle = (checked: boolean) => {
-    setIsTrader(checked);
-    localStorage.setItem('crashguard_mode', checked ? 'trader' : 'investor');
-    trackEvent('action_click', 'Profile Toggle', { mode: checked ? 'trader' : 'investor' });
-    toast({
-      title: checked ? "Trader Mode Active" : "Investor Mode Active",
-      description: "App guidance will adjust to your profile.",
-    });
-  };
 
   const handleNotificationToggle = (checked: boolean) => {
     setNotifications(checked);
@@ -73,7 +59,7 @@ export default function SettingsPage() {
       id: Math.random().toString(36).substring(2, 15),
       amount: selectedAmount,
       timestamp: new Date().toISOString(),
-      mode: isTrader ? 'Trader' : 'Investor'
+      mode: 'Trader'
     };
 
     const currentLedger = JSON.parse(localStorage.getItem('crashguard_ledger') || '[]');
@@ -88,6 +74,13 @@ export default function SettingsPage() {
       setShowDonationDialog(false);
       toast({ title: "Contribution Noted", description: "Your kindness fuels our research." });
     }, 1500);
+  };
+
+  const handleContactUs = () => {
+    trackEvent('action_click', 'Contact Email Shortcut', { email: supportEmail });
+    const subject = encodeURIComponent('MarketCrashGuard Support');
+    const body = encodeURIComponent('Hi Rupesh,%0A%0AI would like help with...');
+    window.location.href = `mailto:${supportEmail}?subject=${subject}&body=${body}`;
   };
 
   return (
@@ -108,19 +101,6 @@ export default function SettingsPage() {
       </header>
 
       <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-xl">
-        <div className="px-6 py-5 flex items-center justify-between border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-secondary/10 rounded-xl text-secondary">
-              <User className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-semibold">{isTrader ? "Trader Mode" : "Investor Mode"}</span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Current Profile</span>
-            </div>
-          </div>
-          <Switch checked={isTrader} onCheckedChange={handleModeToggle} className="data-[state=checked]:bg-secondary" />
-        </div>
-
         <div className="px-6 py-5 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -170,6 +150,26 @@ export default function SettingsPage() {
               </Button>
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 px-1">
+          <Mail className="w-4 h-4 text-secondary" />
+          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Contact Us</h3>
+        </div>
+        <div className="bg-card rounded-[2rem] border border-border p-6 space-y-4">
+          <p className="text-xs leading-relaxed text-muted-foreground font-medium">
+            Need help, feedback, or feature requests? Reach us directly on email.
+          </p>
+          <div className="flex justify-start">
+            <Button
+              onClick={handleContactUs}
+              className="rounded-full bg-secondary text-secondary-foreground text-[11px] font-black uppercase tracking-widest"
+            >
+              Email Us
+            </Button>
+          </div>
         </div>
       </div>
 
