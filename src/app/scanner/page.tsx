@@ -448,7 +448,7 @@ export default function ScannerPage() {
       )}
 
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="bg-card rounded-[2rem] border border-border p-6 md:col-span-2">
+        <div data-tour-id="scanner-market-pulse" className="bg-card rounded-[2rem] border border-border p-6 md:col-span-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-secondary/20 text-secondary">
@@ -475,7 +475,7 @@ export default function ScannerPage() {
           </div>
         </div>
 
-        <div className="bg-secondary/10 border border-secondary/30 rounded-[2rem] p-6">
+        <div data-tour-id="scanner-shock-simulator" className="bg-secondary/10 border border-secondary/30 rounded-[2rem] p-6">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-secondary" />
             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
@@ -506,7 +506,7 @@ export default function ScannerPage() {
         </TabsList>
 
         <TabsContent value="cas" className="space-y-4">
-          <div className="bg-card rounded-[2rem] border border-border p-6 space-y-4">
+          <div data-tour-id="scanner-cas-upload" className="bg-card rounded-[2rem] border border-border p-6 space-y-4">
             <div className="flex items-center gap-3">
               <UploadCloud className="w-5 h-5 text-secondary" />
               <div>
@@ -704,7 +704,7 @@ export default function ScannerPage() {
         </div>
       </div>
 
-      <div className="bg-secondary/10 border border-secondary/20 rounded-[2rem] p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div data-tour-id="scanner-next-action" className="bg-secondary/10 border border-secondary/20 rounded-[2rem] p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Next Step</p>
           <h3 className="text-lg font-black text-white">Export your suggested mix</h3>

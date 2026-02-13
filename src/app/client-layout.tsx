@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { trackEvent } from '@/lib/analytics';
 import { MobileNav } from '@/components/mobile-nav';
 import { Toaster } from '@/components/ui/toaster';
+import { AppOnboarding } from '@/components/app-onboarding';
 import { siteMetadata } from './site-metadata';
 
 export default function ClientLayout({
@@ -37,6 +38,7 @@ export default function ClientLayout({
         </main>
         <MobileNav />
         <Toaster />
+        <AppOnboarding />
         <footer className="w-full text-center text-[11px] text-muted-foreground py-3 px-4 border-t border-border/40">
           <div className="max-w-4xl mx-auto">
             <div className="font-semibold text-white">{siteMetadata.authors[0].name}</div>

@@ -163,7 +163,7 @@ export default function PlaybooksPage() {
         <p className="text-sm text-muted-foreground font-medium">Professional guidance for extreme market regimes.</p>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div data-tour-id="library-highlights" className="grid gap-4 md:grid-cols-3">
         <div className="rounded-[1.75rem] border border-secondary/20 bg-secondary/10 p-5 space-y-2">
           <div className="flex items-center gap-2">
             <BrainCircuit className="w-4 h-4 text-secondary" />
@@ -190,7 +190,7 @@ export default function PlaybooksPage() {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div data-tour-id="library-playbooks-list" className="space-y-4">
         <Accordion type="single" collapsible className="w-full space-y-4">
           {playbooks.map((book) => (
             <AccordionItem

@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
-import { Bell, Heart, Coffee, Star, Loader2, Shield, Mail } from 'lucide-react';
+import { Bell, Heart, Coffee, Star, Loader2, Shield, Mail, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { trackEvent } from '@/lib/analytics';
+import { getTourSeenKey, ONBOARDING_TOUR_FORCE_KEY } from '@/lib/onboarding-tour';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,6 +84,14 @@ export default function SettingsPage() {
     window.location.href = `mailto:${supportEmail}?subject=${subject}&body=${body}`;
   };
 
+  const handleReplayTour = () => {
+    localStorage.removeItem(getTourSeenKey('/'));
+    localStorage.setItem(ONBOARDING_TOUR_FORCE_KEY, 'true');
+    trackEvent('action_click', 'Replay Onboarding Tour');
+    toast({ title: 'Tour Ready', description: 'Opening dashboard tour now.' });
+    router.push('/');
+  };
+
   return (
     <div className="flex flex-col gap-6 px-5 pt-8 pb-12">
       <header className="flex justify-between items-center">
@@ -100,7 +109,7 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-xl">
+      <div data-tour-id="settings-risk-alerts" className="bg-card rounded-3xl border border-border overflow-hidden shadow-xl">
         <div className="px-6 py-5 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -177,6 +186,23 @@ export default function SettingsPage() {
         <p className="text-[11px] leading-relaxed text-muted-foreground font-bold italic">
           Informational tool only. No investment advice provided.
         </p>
+      </div>
+
+      <div data-tour-id="settings-replay-tour" className="bg-card rounded-[2rem] border border-border p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <RotateCcw className="w-4 h-4 text-secondary" />
+          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Onboarding Tour</h3>
+        </div>
+        <p className="text-xs leading-relaxed text-muted-foreground font-medium">
+          Replay the guided walkthrough anytime.
+        </p>
+        <Button
+          onClick={handleReplayTour}
+          variant="outline"
+          className="rounded-full border-secondary/30 text-[11px] font-black uppercase tracking-widest"
+        >
+          Replay Tour
+        </Button>
       </div>
 
       <AlertDialog open={showDonationDialog} onOpenChange={setShowDonationDialog}>
