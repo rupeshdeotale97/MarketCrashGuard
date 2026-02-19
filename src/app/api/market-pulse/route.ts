@@ -32,6 +32,8 @@ type PocketPortfolioResponse = {
 const DEFAULT_SYMBOLS = {
   nifty: "NSE",
   niftyYahoo: "^NSEI",
+  sensexYahoo: "^BSESN",
+  bankniftyYahoo: "^NSEBANK",
   spx: "SP500",
   vix: "VIXCLS",
   usdinr: "DEXINUS",
@@ -235,6 +237,8 @@ export async function GET() {
     const symbols = {
       nifty: getEnv("NSE_SYMBOL") || DEFAULT_SYMBOLS.nifty,
       niftyYahoo: getEnv("NIFTY_YAHOO_SYMBOL") || DEFAULT_SYMBOLS.niftyYahoo,
+      sensexYahoo: getEnv("SENSEX_YAHOO_SYMBOL") || DEFAULT_SYMBOLS.sensexYahoo,
+      bankniftyYahoo: getEnv("BANKNIFTY_YAHOO_SYMBOL") || DEFAULT_SYMBOLS.bankniftyYahoo,
       spx: getEnv("FRED_SYMBOL_SPX") || DEFAULT_SYMBOLS.spx,
       vix: getEnv("FRED_SYMBOL_VIX") || DEFAULT_SYMBOLS.vix,
       usdinr: getEnv("FRED_SYMBOL_USDINR") || DEFAULT_SYMBOLS.usdinr,
@@ -243,10 +247,18 @@ export async function GET() {
       ethusd: DEFAULT_SYMBOLS.ethusd,
     };
 
-    const [nifty, spxValues, vixValues, fxValues, gold, btcusd, ethusd] =
+    const [nifty, sensex, banknifty, spxValues, vixValues, fxValues, gold, btcusd, ethusd] =
       await Promise.all([
         fetchNseSnapshot(symbols.niftyYahoo).catch((error) => {
-          warnings.push(error?.message || "NSE data unavailable.");
+          warnings.push(error?.message || "NIFTY data unavailable.");
+          return { price: 0, change1d: 0, change5d: 0, asOf: "" } as MarketStat;
+        }),
+        fetchNseSnapshot(symbols.sensexYahoo).catch((error) => {
+          warnings.push(error?.message || "SENSEX data unavailable.");
+          return { price: 0, change1d: 0, change5d: 0, asOf: "" } as MarketStat;
+        }),
+        fetchNseSnapshot(symbols.bankniftyYahoo).catch((error) => {
+          warnings.push(error?.message || "BANKNIFTY data unavailable.");
           return { price: 0, change1d: 0, change5d: 0, asOf: "" } as MarketStat;
         }),
         apiKey
@@ -289,8 +301,11 @@ export async function GET() {
     const outlook = buildOutlook(spx, nifty, vix);
 
     return NextResponse.json({
-      asOf: [nifty.asOf, spx.asOf, vix.asOf, usdinr.asOf].filter(Boolean).sort().reverse()[0] || "",
-      indices: { nifty, spx, vix },
+      asOf: [nifty.asOf, sensex.asOf, banknifty.asOf, spx.asOf, vix.asOf, usdinr.asOf]
+        .filter(Boolean)
+        .sort()
+        .reverse()[0] || "",
+      indices: { nifty, sensex, banknifty, spx, vix },
       fx: { usdinr },
       metals: { xauusd },
       crypto: { btcusd, ethusd },

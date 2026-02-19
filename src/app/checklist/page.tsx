@@ -1,64 +1,64 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { getDailyRiskData } from '@/lib/mock-data';
-import { 
-  CheckCircle2, 
-  XCircle, 
-  AlertTriangle, 
-  ShieldCheck, 
-  Loader2, 
-  Zap, 
+import { useState, useEffect, useMemo } from "react";
+import {
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  ShieldCheck,
+  Loader2,
+  Zap,
   Globe,
   Flag,
-  TrendingUp,
   Coins,
   Mountain,
-  Banknote
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+  Banknote,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ReferenceLine
-} from 'recharts';
+import { BarChart, Bar, XAxis, CartesianGrid, Tooltip, ReferenceLine } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
+type MarketStat = {
+  price: number;
+  change1d: number;
+  change5d: number;
+  asOf: string;
+};
+
+type MarketPulse = {
+  asOf: string;
+  indices: {
+    nifty: MarketStat;
+    sensex: MarketStat;
+    banknifty: MarketStat;
+    spx: MarketStat;
+    vix: MarketStat;
+  };
+  fx: {
+    usdinr: MarketStat;
+  };
+  metals: {
+    xauusd: MarketStat;
+  };
+  crypto: {
+    btcusd: MarketStat;
+    ethusd: MarketStat;
+  };
+};
+
+type CryptoBar = {
+  name: string;
+  change: number;
+  fill: string;
+};
+
 export default function ChecklistPage() {
-  const baseData = getDailyRiskData();
-  
   const [isMounted, setIsMounted] = useState(false);
   const [fetching, setFetching] = useState(false);
-  const [cryptoData, setCryptoData] = useState<any[]>([
-    { name: 'BTC', change: -1.5, fill: 'hsl(var(--risk-crash))' },
-    { name: 'ETH', change: -2.1, fill: 'hsl(var(--risk-crash))' },
-    { name: 'SOL', change: 0.5, fill: 'hsl(var(--risk-low))' },
-    { name: 'BNB', change: -0.8, fill: 'hsl(var(--risk-crash))' },
-    { name: 'XRP', change: 1.2, fill: 'hsl(var(--risk-low))' },
-    { name: 'ADA', change: -0.4, fill: 'hsl(var(--risk-crash))' },
-  ]);
-  
-  const [liveMetrics, setLiveMetrics] = useState<{
-    btcChange: number;
-    ethChange: number;
-    volume24h: number;
-    indiaSentiment: number;
-    globalSentiment: number;
-    spxChange: number;
-    niftyChange: number;
-  }>({
-    btcChange: -1.5,
-    ethChange: -2.1,
-    volume24h: 18.5,
-    spxChange: -0.85,
-    niftyChange: 1.2,
-    indiaSentiment: 56,
-    globalSentiment: 45
-  });
+  const [pulse, setPulse] = useState<MarketPulse | null>(null);
+  const [pulseError, setPulseError] = useState<string | null>(null);
+  const [cryptoData, setCryptoData] = useState<CryptoBar[]>([]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -68,115 +68,174 @@ export default function ChecklistPage() {
       if (!mounted) return;
       setFetching(true);
       try {
-        const cryptoResponse = await fetch('https://api.coincap.io/v2/assets?limit=8', {
-          signal: AbortSignal.timeout(4000) 
-        });
-        
-        if (cryptoResponse.ok) {
-          const json = await cryptoResponse.json();
-          if (json.data && mounted) {
-            const newCryptoData = json.data.map((item: any) => ({
-              name: item.symbol,
-              change: parseFloat(item.changePercent24Hr || '0'),
-              fill: parseFloat(item.changePercent24Hr || '0') < 0 ? 'hsl(var(--risk-crash))' : 'hsl(var(--risk-low))'
-            }));
-            setCryptoData(newCryptoData);
+        const [pulseResponse, cryptoResponse] = await Promise.all([
+          fetch("/api/market-pulse", { cache: "no-store" }),
+          fetch("https://api.coincap.io/v2/assets?limit=8", { signal: AbortSignal.timeout(5000) }),
+        ]);
 
-            const btc = json.data.find((a: any) => a.symbol === 'BTC');
-            const eth = json.data.find((a: any) => a.symbol === 'ETH');
-            const btcChange = parseFloat(btc?.changePercent24Hr || '0');
-            const ethChange = parseFloat(eth?.changePercent24Hr || '0');
-            const volume24h = parseFloat(btc?.volumeUsd24Hr || '0') / 1e9;
-
-            setLiveMetrics(prev => ({
-              ...prev,
-              btcChange,
-              ethChange,
-              volume24h,
-            }));
-          }
+        if (!pulseResponse.ok) {
+          const pulseJson = await pulseResponse.json().catch(() => ({}));
+          throw new Error(pulseJson?.error || "Unable to load realtime pulse.");
         }
-      } catch (error) {
-        // Silent fail - keeping existing mock data
+
+        const pulseJson = (await pulseResponse.json()) as MarketPulse;
+        if (mounted) {
+          setPulse(pulseJson);
+          setPulseError(null);
+        }
+
+        if (cryptoResponse.ok) {
+          const cryptoJson = await cryptoResponse.json();
+          if (mounted && Array.isArray(cryptoJson?.data)) {
+            const bars: CryptoBar[] = cryptoJson.data.map((item: any) => {
+              const change = Number.parseFloat(item?.changePercent24Hr || "0");
+              return {
+                name: item?.symbol || "-",
+                change,
+                fill: change < 0 ? "hsl(var(--risk-crash))" : "hsl(var(--risk-low))",
+              };
+            });
+            setCryptoData(bars);
+          }
+        } else if (mounted) {
+          setCryptoData([]);
+        }
+      } catch (error: any) {
+        if (mounted) {
+          setPulseError(error?.message || "Unable to load realtime data.");
+        }
       } finally {
         if (mounted) setFetching(false);
       }
     }
 
     fetchMarketData();
-    const interval = setInterval(fetchMarketData, 60000); 
-    
+    const interval = setInterval(fetchMarketData, 60000);
+
     return () => {
       mounted = false;
       clearInterval(interval);
     };
   }, []);
 
-  const volatilitySpike = Math.abs(liveMetrics.btcChange) > 4 || Math.abs(liveMetrics.ethChange) > 5;
-  const liquidityShock = liveMetrics.volume24h < 15;
-  const crashConfirmed = baseData.factors.creditStress || volatilitySpike || liquidityShock || baseData.factors.externalShock;
+  const derived = useMemo(() => {
+    if (!pulse) {
+      return {
+        crashConfirmed: false,
+        volatilitySpike: false,
+        liquidityShock: false,
+        creditStress: false,
+        externalShock: false,
+        niftyChange: 0,
+        spxChange: 0,
+        sensexChange: 0,
+        bankniftyChange: 0,
+        usdinrPrice: 0,
+        usdinrChange: 0,
+        goldPrice: 0,
+        goldChange: 0,
+        btcChange: 0,
+        ethChange: 0,
+        actions: ["Waiting for realtime market feed..."],
+      };
+    }
+
+    const niftyChange = pulse.indices.nifty.change1d || 0;
+    const spxChange = pulse.indices.spx.change1d || 0;
+    const sensexChange = pulse.indices.sensex.change1d || 0;
+    const bankniftyChange = pulse.indices.banknifty.change1d || 0;
+    const usdinrPrice = pulse.fx.usdinr.price || 0;
+    const usdinrChange = pulse.fx.usdinr.change1d || 0;
+    const goldPrice = pulse.metals.xauusd.price || 0;
+    const goldChange = pulse.metals.xauusd.change1d || 0;
+    const btcChange = pulse.crypto.btcusd.change1d || 0;
+    const ethChange = pulse.crypto.ethusd.change1d || 0;
+    const vixLevel = pulse.indices.vix.price || 0;
+
+    const volatilitySpike = Math.abs(btcChange) > 4 || Math.abs(ethChange) > 4 || Math.abs(spxChange) > 1.8;
+    const liquidityShock = pulse.indices.spx.change5d < -3 || pulse.indices.nifty.change5d < -3 || btcChange < -5;
+    const creditStress = vixLevel > 24 || spxChange < -1.5;
+    const externalShock = usdinrChange > 0.8 || goldChange > 1.5;
+
+    const crashConfirmed = [volatilitySpike, liquidityShock, creditStress, externalShock].filter(Boolean).length >= 2;
+
+    const actions: string[] = [];
+    if (crashConfirmed) {
+      actions.push("Reduce high-beta exposure and preserve liquidity.");
+      actions.push("Hedge downside with staged defensive allocations.");
+      actions.push("Avoid leveraged entries until volatility cools.");
+    } else {
+      actions.push("Keep position sizing disciplined and monitor risk factors.");
+      actions.push("Rebalance gradually instead of reacting to single candles.");
+      actions.push("Track VIX, USD/INR, and crypto momentum for early warnings.");
+    }
+
+    return {
+      crashConfirmed,
+      volatilitySpike,
+      liquidityShock,
+      creditStress,
+      externalShock,
+      niftyChange,
+      spxChange,
+      sensexChange,
+      bankniftyChange,
+      usdinrPrice,
+      usdinrChange,
+      goldPrice,
+      goldChange,
+      btcChange,
+      ethChange,
+      actions,
+    };
+  }, [pulse]);
 
   const groupedChecklist = [
     {
       title: "Global Systemic",
       icon: <Globe className="w-4 h-4 text-blue-500" />,
       items: [
-        { label: "Systemic Credit Stress", value: baseData.factors.creditStress, desc: "Interbank counterparty risk & bond spreads.", trigger: "> 300bps TED" },
-        { label: "Yield Curve Inversion", value: true, desc: "Recessionary signal from bond market duration spreads.", trigger: "10Y-2Y < -0.5%" },
-        { label: "External Macro Shock", value: baseData.factors.externalShock, desc: "Geopolitical events or central bank emergency pivots.", trigger: "Protocol IV" },
-        { label: "High-Yield Debt Spreads", value: false, desc: "Junk bond yield premiums over Treasury bonds.", trigger: "> 500bps Spread" },
-        { label: "Sovereign Default Risk", value: false, desc: "Credit Default Swaps (CDS) for major economies.", trigger: "> 100bps CDS" },
-        { label: "Reverse Repo Liquidity", value: false, desc: "Overnight liquidity drainage from the Fed window.", trigger: "< $200B ON RRP" },
-      ]
+        { label: "Systemic Credit Stress", value: derived.creditStress, desc: "Derived from VIX and US equity shock behavior.", trigger: "VIX > 24" },
+        { label: "S&P Stress Session", value: derived.spxChange < -1.5, desc: "US benchmark showing outsized downside momentum.", trigger: "S&P 1D < -1.5%" },
+        { label: "External Macro Shock", value: derived.externalShock, desc: "Currency/gold regime shift suggests stress transmission.", trigger: "USDINR/GOLD spike" },
+        { label: "Volatility Cluster", value: derived.volatilitySpike, desc: "Multi-asset volatility expansion across risk assets.", trigger: "Cross-asset spike" },
+      ],
     },
     {
       title: "Indian Market",
       icon: <Flag className="w-4 h-4 text-orange-500" />,
       items: [
-        { label: "NIFTY Volatility Spike", value: liveMetrics.niftyChange < -2, desc: "Extreme daily deviation in domestic benchmarks.", trigger: "Daily Fall > 2%" },
-        { label: "FII Liquidity Drain", value: false, desc: "Foreign Institutional Investors heavy selling regime.", trigger: "> ₹5,000Cr Sell" },
-        { label: "DII Buying Fatigue", value: false, desc: "Domestic Institutional Investors stopping the floor.", trigger: "Net Sell Day" },
-        { label: "RBI Repo Pivot", value: false, desc: "Sudden hawkish change in interest rate trajectory.", trigger: "Rate Hike > 25bps" },
-        { label: "IPO Frenzy Index", value: false, desc: "Excessive retail participation in low-quality paper.", trigger: "> 100x Oversub" },
-        { label: "Rural Demand Shock", value: false, desc: "Consumer staples volume drop in non-urban areas.", trigger: "< 3% YoY Growth" },
-      ]
+        { label: "NIFTY Volatility Spike", value: derived.niftyChange < -2, desc: "Extreme daily drawdown in NIFTY.", trigger: "NIFTY < -2%" },
+        { label: "SENSEX Breakdown", value: derived.sensexChange < -2, desc: "Broad market risk-off expansion in large caps.", trigger: "SENSEX < -2%" },
+        { label: "BANKNIFTY Weakness", value: derived.bankniftyChange < -2, desc: "Credit-sensitive index under stress.", trigger: "BANKNIFTY < -2%" },
+        { label: "FX Pressure", value: derived.usdinrChange > 0.5, desc: "INR weakness implies imported risk and tighter liquidity.", trigger: "USD/INR +0.5%" },
+      ],
     },
     {
       title: "Commodities",
       icon: <Mountain className="w-4 h-4 text-yellow-600" />,
       items: [
-        { label: "Gold Safe Haven Pivot", value: false, desc: "Gold outperforming equities as fear index rises.", trigger: "XAU/USD > $2,500" },
-        { label: "Energy Supply Shock", value: false, desc: "Oil price spike causing industrial cost compression.", trigger: "Brent > $90/bbl" },
-        { label: "Copper Demand Sink", value: false, desc: "Dr. Copper signaling industrial slowdown.", trigger: "HG < $4.00/lb" },
-        { label: "Silver Industrial Lag", value: false, desc: "Silver underperforming despite inflation.", trigger: "XAG/XAU < 0.012" },
-        { label: "Agricultural Spikes", value: false, desc: "Wheat/Corn prices causing global food insecurity.", trigger: "> 15% Monthly" },
-        { label: "Lithium Demand Crash", value: false, desc: "EV/Battery metals signaling tech slowdown.", trigger: "< $15k/tonne" },
-      ]
+        { label: "Gold Safe Haven Pivot", value: derived.goldChange > 1, desc: "Defensive rotation into precious metals.", trigger: "XAU 1D > +1%" },
+        { label: "Risk-Off Gold Burst", value: derived.goldPrice > 0 && derived.goldChange > 1.5, desc: "Fear-driven acceleration in safe-haven demand.", trigger: "XAU 1D > +1.5%" },
+      ],
     },
     {
       title: "Currencies",
       icon: <Banknote className="w-4 h-4 text-emerald-500" />,
       items: [
-        { label: "Dollar Index (DXY) Surge", value: false, desc: "USD strength draining global EM liquidity.", trigger: "DXY > 105.50" },
-        { label: "INR Devaluation", value: false, desc: "Sudden weakness in Rupee against the Dollar.", trigger: "USD/INR > 84.50" },
-        { label: "Yen Carry Unwind", value: false, desc: "JPY strength forcing global margin liquidations.", trigger: "USD/JPY < 145" },
-        { label: "Euro Parity Break", value: false, desc: "EUR/USD falling below psychological floor.", trigger: "EUR/USD < 1.00" },
-        { label: "EM Currency Basket", value: false, desc: "Broad Emerging Market currency collapse.", trigger: "> 3% Weekly Drop" },
-        { label: "Cross-Border Controls", value: false, desc: "Capital controls or digital fiat restrictions.", trigger: "Manual Check" },
-      ]
+        { label: "INR Devaluation", value: derived.usdinrPrice > 84.5, desc: "Rupee weakness versus USD signals EM pressure.", trigger: "USD/INR > 84.50" },
+        { label: "USD Momentum Shock", value: derived.usdinrChange > 0.8, desc: "Fast FX move often accompanies deleveraging windows.", trigger: "USD/INR 1D > +0.8%" },
+      ],
     },
     {
       title: "Crypto Index",
       icon: <Coins className="w-4 h-4 text-secondary" />,
       items: [
-        { label: "Volatility Implosion", value: volatilitySpike, desc: "Extreme price deviation in BTC/ETH benchmarks.", trigger: "> 5% Daily move" },
-        { label: "Liquidity Evaporation", value: liquidityShock, desc: "Order book depth & trading volume drying up.", trigger: "< $15B BTC Vol" },
-        { label: "Recursive Leverage", value: false, desc: "Extreme on-chain or exchange margin debt buildup.", trigger: "> 1.0 Funding" },
-        { label: "Stablecoin De-peg", value: false, desc: "USDT/USDC trading significantly below parity.", trigger: "Price < $0.98" },
-        { label: "Hashrate Capitulation", value: false, desc: "Miners forced to sell reserves at a loss.", trigger: "-10% Hashrate" },
-        { label: "DEX/CEX Arb Gap", value: false, desc: "Liquidity fragmented across trading venues.", trigger: "> 2% Spread" },
-      ]
-    }
+        { label: "Volatility Implosion", value: derived.volatilitySpike, desc: "Extreme BTC/ETH move flags unstable liquidity.", trigger: "|BTC/ETH| > 4%" },
+        { label: "Liquidity Evaporation", value: derived.liquidityShock, desc: "Sustained downside trend with weak participation.", trigger: "5D risk shock" },
+        { label: "BTC Stress", value: derived.btcChange < -5, desc: "Large daily BTC drawdown signals broad risk contraction.", trigger: "BTC 1D < -5%" },
+      ],
+    },
   ];
 
   const chartConfig = {
@@ -191,7 +250,8 @@ export default function ChecklistPage() {
       <header className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white">Crash Checklist</h1>
-          <p className="text-sm text-muted-foreground mt-1">Real-time rule-based confirmation.</p>
+          <p className="text-sm text-muted-foreground mt-1">Realtime rule-based confirmation.</p>
+          {pulseError && <p className="text-[10px] text-risk-crash font-bold uppercase mt-1">{pulseError}</p>}
         </div>
         <div className="flex items-center gap-2">
           {fetching && <Loader2 className="w-4 h-4 animate-spin text-secondary" />}
@@ -204,27 +264,33 @@ export default function ChecklistPage() {
         </div>
       </header>
 
-      <div className={cn(
-        "rounded-[2rem] p-8 flex flex-col items-center justify-center gap-4 text-center border transition-all duration-700",
-        crashConfirmed 
-          ? "bg-risk-crash/10 border-risk-crash/40 shadow-[0_0_30px_rgba(239,68,68,0.15)]" 
-          : "bg-risk-low/5 border-risk-low/20"
-      )}>
-        <div className={cn(
-          "p-5 rounded-full shadow-inner transition-transform duration-500",
-          crashConfirmed ? "bg-risk-crash/20 text-risk-crash scale-110" : "bg-risk-low/20 text-risk-low"
-        )}>
-          {crashConfirmed ? <AlertTriangle className="w-14 h-14 animate-pulse" /> : <ShieldCheck className="w-14 h-14" />}
+      <div
+        className={cn(
+          "rounded-[2rem] p-8 flex flex-col items-center justify-center gap-4 text-center border transition-all duration-700",
+          derived.crashConfirmed
+            ? "bg-risk-crash/10 border-risk-crash/40 shadow-[0_0_30px_rgba(239,68,68,0.15)]"
+            : "bg-risk-low/5 border-risk-low/20"
+        )}
+      >
+        <div
+          className={cn(
+            "p-5 rounded-full shadow-inner transition-transform duration-500",
+            derived.crashConfirmed ? "bg-risk-crash/20 text-risk-crash scale-110" : "bg-risk-low/20 text-risk-low"
+          )}
+        >
+          {derived.crashConfirmed ? <AlertTriangle className="w-14 h-14 animate-pulse" /> : <ShieldCheck className="w-14 h-14" />}
         </div>
         <div className="space-y-1">
-          <h2 className={cn(
-            "text-3xl font-black uppercase tracking-tighter",
-            crashConfirmed ? "text-risk-crash" : "text-risk-low"
-          )}>
-            {crashConfirmed ? "CRASH CONFIRMED" : "SYSTEM STABLE"}
+          <h2
+            className={cn(
+              "text-3xl font-black uppercase tracking-tighter",
+              derived.crashConfirmed ? "text-risk-crash" : "text-risk-low"
+            )}
+          >
+            {derived.crashConfirmed ? "CRASH CONFIRMED" : "SYSTEM STABLE"}
           </h2>
           <p className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-[0.2em]">
-            Safety Protocol Status: {crashConfirmed ? "DEFENSIVE" : "OPTIMAL"}
+            Safety Protocol Status: {derived.crashConfirmed ? "DEFENSIVE" : "OPTIMAL"}
           </p>
         </div>
       </div>
@@ -239,19 +305,23 @@ export default function ChecklistPage() {
         </div>
         <div className="h-40 w-full">
           {isMounted ? (
-            <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
-              <BarChart data={cryptoData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: 'hsl(var(--muted-foreground))'}} />
-                <Tooltip content={<ChartTooltipContent hideLabel />} cursor={{fill: 'hsl(var(--muted)/0.3)'}} />
-                <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={2} />
-                <Bar dataKey="change" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
+            cryptoData.length ? (
+              <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
+                <BarChart data={cryptoData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <Tooltip content={<ChartTooltipContent hideLabel />} cursor={{ fill: "hsl(var(--muted)/0.3)" }} />
+                  <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={2} />
+                  <Bar dataKey="change" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ChartContainer>
+            ) : (
+              <div className="h-full w-full flex items-center justify-center text-[11px] text-muted-foreground">No realtime crypto bars available.</div>
+            )
           ) : (
-             <div className="h-full w-full flex items-center justify-center">
-               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-             </div>
+            <div className="h-full w-full flex items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
           )}
         </div>
       </div>
@@ -274,7 +344,9 @@ export default function ChecklistPage() {
                   <div className="flex flex-col gap-0.5 max-w-[75%]">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-[14px] leading-tight text-white">{item.label}</span>
-                      <Badge variant="outline" className="text-[8px] font-black h-4 py-0 border-white/10 text-muted-foreground/60 uppercase tracking-tighter shrink-0">{item.trigger}</Badge>
+                      <Badge variant="outline" className="text-[8px] font-black h-4 py-0 border-white/10 text-muted-foreground/60 uppercase tracking-tighter shrink-0">
+                        {item.trigger}
+                      </Badge>
                     </div>
                     <span className="text-[11px] text-muted-foreground font-medium leading-tight">{item.desc}</span>
                   </div>
@@ -298,12 +370,14 @@ export default function ChecklistPage() {
       <div className="flex flex-col gap-3 mt-4">
         <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Suggested Guidance</h3>
         <div className="space-y-2">
-          {(crashConfirmed ? ["Exit high-beta assets immediately", "Liquidity check: Priority 1", "Deploy hedging strategies"] : baseData.action).map((action, i) => (
-            <div key={i} className="flex items-center gap-4 px-5 py-4 bg-muted/20 rounded-[1.25rem] border border-border/60 group">
-              <div className={cn(
-                "w-2 h-2 rounded-full shrink-0 group-hover:scale-150 transition-transform", 
-                crashConfirmed ? "bg-risk-crash animate-pulse" : "bg-secondary"
-              )} />
+          {derived.actions.map((action, i) => (
+            <div key={`${action}-${i}`} className="flex items-center gap-4 px-5 py-4 bg-muted/20 rounded-[1.25rem] border border-border/60 group">
+              <div
+                className={cn(
+                  "w-2 h-2 rounded-full shrink-0 group-hover:scale-150 transition-transform",
+                  derived.crashConfirmed ? "bg-risk-crash animate-pulse" : "bg-secondary"
+                )}
+              />
               <span className="font-semibold text-sm">{action}</span>
             </div>
           ))}
