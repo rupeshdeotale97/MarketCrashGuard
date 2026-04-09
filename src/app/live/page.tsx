@@ -80,67 +80,86 @@ function formatPrice(value: number, digits = 2, currency = false) {
   return currency ? `$${formatted}` : formatted;
 }
 
+function getSafeStat(stat?: Partial<MarketStat> | null): MarketStat {
+  return {
+    price: Number.isFinite(stat?.price) ? stat!.price! : 0,
+    change1d: Number.isFinite(stat?.change1d) ? stat!.change1d! : 0,
+    change5d: Number.isFinite(stat?.change5d) ? stat!.change5d! : 0,
+    asOf: typeof stat?.asOf === "string" ? stat.asOf : "",
+  };
+}
+
 function toLiveRows(pulse: MarketPulse): IndexData[] {
+  const spx = getSafeStat(pulse?.indices?.spx);
+  const vix = getSafeStat(pulse?.indices?.vix);
+  const usdinr = getSafeStat(pulse?.fx?.usdinr);
+  const nifty = getSafeStat(pulse?.indices?.nifty);
+  const sensex = getSafeStat(pulse?.indices?.sensex);
+  const banknifty = getSafeStat(pulse?.indices?.banknifty);
+  const xauusd = getSafeStat(pulse?.metals?.xauusd);
+  const btcusd = getSafeStat(pulse?.crypto?.btcusd);
+  const ethusd = getSafeStat(pulse?.crypto?.ethusd);
+
   const rows: Array<Omit<IndexData, "signal">> = [
     {
       name: "S&P 500",
       region: "US",
-      price: formatPrice(pulse.indices.spx.price),
-      change: pulse.indices.spx.change1d,
+      price: formatPrice(spx.price),
+      change: spx.change1d,
       type: "global",
     },
     {
       name: "VIX",
       region: "US",
-      price: formatPrice(pulse.indices.vix.price),
-      change: pulse.indices.vix.change1d,
+      price: formatPrice(vix.price),
+      change: vix.change1d,
       type: "global",
     },
     {
       name: "USD/INR",
       region: "FX",
-      price: formatPrice(pulse.fx.usdinr.price, 4),
-      change: pulse.fx.usdinr.change1d,
+      price: formatPrice(usdinr.price, 4),
+      change: usdinr.change1d,
       type: "global",
     },
     {
       name: "NIFTY 50",
       region: "India",
-      price: formatPrice(pulse.indices.nifty.price),
-      change: pulse.indices.nifty.change1d,
+      price: formatPrice(nifty.price),
+      change: nifty.change1d,
       type: "india",
     },
     {
       name: "SENSEX",
       region: "India",
-      price: formatPrice(pulse.indices.sensex.price),
-      change: pulse.indices.sensex.change1d,
+      price: formatPrice(sensex.price),
+      change: sensex.change1d,
       type: "india",
     },
     {
       name: "BANKNIFTY",
       region: "India",
-      price: formatPrice(pulse.indices.banknifty.price),
-      change: pulse.indices.banknifty.change1d,
+      price: formatPrice(banknifty.price),
+      change: banknifty.change1d,
       type: "india",
     },
     {
       name: "Gold",
       region: "XAU/USD",
-      price: formatPrice(pulse.metals.xauusd.price, 2, true),
-      change: pulse.metals.xauusd.change1d,
+      price: formatPrice(xauusd.price, 2, true),
+      change: xauusd.change1d,
       type: "commodity",
     },
     {
       name: "BTC",
-      price: formatPrice(pulse.crypto.btcusd.price, 2, true),
-      change: pulse.crypto.btcusd.change1d,
+      price: formatPrice(btcusd.price, 2, true),
+      change: btcusd.change1d,
       type: "crypto",
     },
     {
       name: "ETH",
-      price: formatPrice(pulse.crypto.ethusd.price, 2, true),
-      change: pulse.crypto.ethusd.change1d,
+      price: formatPrice(ethusd.price, 2, true),
+      change: ethusd.change1d,
       type: "crypto",
     },
   ];
@@ -160,6 +179,7 @@ export default function LiveSignalsPage() {
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [asOf, setAsOf] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const hasLoadedRef = useRef(false);
 
   useEffect(() => {
@@ -188,12 +208,19 @@ export default function LiveSignalsPage() {
           setData(rows);
           setAsOf(json.asOf || "");
           setLastUpdated(new Date().toLocaleTimeString());
+          setWarnings(Array.isArray(json.warnings) ? json.warnings : []);
           setError(null);
           hasLoadedRef.current = true;
         }
       } catch (err: any) {
         if (mounted) {
           setError(err?.message || "Live feed unavailable.");
+          if (!hasLoadedRef.current) {
+            setData([]);
+            setWarnings([]);
+            setAsOf("");
+            setLastUpdated("");
+          }
         }
       } finally {
         if (mounted) {
@@ -275,6 +302,8 @@ export default function LiveSignalsPage() {
     },
   ] as const;
 
+  const hasData = data.length > 0;
+
   return (
     <div className="flex flex-col gap-6 px-5 pt-8 pb-12">
       <header className="flex justify-between items-start">
@@ -301,6 +330,11 @@ export default function LiveSignalsPage() {
                 Feed Degraded
               </Badge>
             )}
+            {!error && warnings.length > 0 && (
+              <Badge variant="outline" className="text-[8px] border-risk-elevated/40 text-risk-elevated">
+                Partial Data
+              </Badge>
+            )}
           </div>
           <h1 className="text-3xl font-black text-white">Market Radar</h1>
         </div>
@@ -310,6 +344,24 @@ export default function LiveSignalsPage() {
           {asOf && <p className="text-[9px] text-muted-foreground">As of {asOf}</p>}
         </div>
       </header>
+
+      {(error || warnings.length > 0) && (
+        <div
+          className={cn(
+            "rounded-[2rem] border p-5 text-xs",
+            error
+              ? "border-risk-crash/30 bg-risk-crash/10 text-risk-crash"
+              : "border-risk-elevated/30 bg-risk-elevated/10 text-risk-elevated"
+          )}
+        >
+          <p className="text-[10px] font-black uppercase tracking-[0.2em]">
+            {error ? "Live Feed Status" : "Data Warnings"}
+          </p>
+          <p className="mt-2 leading-relaxed">
+            {error || warnings.join(" ")}
+          </p>
+        </div>
+      )}
 
       <div className="bg-card rounded-[2.5rem] border border-border p-8 shadow-2xl space-y-6">
         <div className="flex justify-between items-end">
@@ -347,38 +399,45 @@ export default function LiveSignalsPage() {
             </div>
 
             <div className="space-y-3">
-              {data
-                .filter((d) => d.type === section.type)
-                .map((item) => (
-                  <div
-                    key={`${section.type}-${item.name}`}
-                    className="bg-card border border-border rounded-2xl p-5 flex justify-between items-center group transition-all hover:border-secondary/30"
-                  >
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-black text-white">{item.name}</span>
-                        {item.region && (
-                          <Badge variant="outline" className="text-[8px] h-4 py-0 border-white/5 text-muted-foreground/60">
-                            {item.region}
-                          </Badge>
-                        )}
+              {data.filter((d) => d.type === section.type).length > 0 ? (
+                data
+                  .filter((d) => d.type === section.type)
+                  .map((item) => (
+                    <div
+                      key={`${section.type}-${item.name}`}
+                      className="bg-card border border-border rounded-2xl p-5 flex justify-between items-center group transition-all hover:border-secondary/30"
+                    >
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-black text-white">{item.name}</span>
+                          {item.region && (
+                            <Badge variant="outline" className="text-[8px] h-4 py-0 border-white/5 text-muted-foreground/60">
+                              {item.region}
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-lg font-mono font-bold text-white/90">{item.price}</span>
                       </div>
-                      <span className="text-lg font-mono font-bold text-white/90">{item.price}</span>
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <div
-                        className={cn(
-                          "flex items-center gap-1 font-black text-sm",
-                          item.change >= 0 ? "text-risk-low" : "text-risk-crash"
-                        )}
-                      >
-                        {item.change >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                        {Math.abs(item.change).toFixed(2)}%
+                      <div className="flex flex-col items-end gap-2">
+                        <div
+                          className={cn(
+                            "flex items-center gap-1 font-black text-sm",
+                            item.change >= 0 ? "text-risk-low" : "text-risk-crash"
+                          )}
+                        >
+                          {item.change >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                          {item.change > 0 ? "+" : ""}
+                          {item.change.toFixed(2)}%
+                        </div>
+                        {getSignalBadge(item.signal)}
                       </div>
-                      {getSignalBadge(item.signal)}
                     </div>
-                  </div>
-                ))}
+                  ))
+              ) : (
+                <div className="rounded-2xl border border-dashed border-border bg-card/40 px-5 py-8 text-center text-xs text-muted-foreground">
+                  {hasData ? "No assets available in this bucket right now." : "Live rows are currently unavailable."}
+                </div>
+              )}
             </div>
 
             <div className="bg-secondary/5 rounded-3xl border border-secondary/20 p-6 relative overflow-hidden group">

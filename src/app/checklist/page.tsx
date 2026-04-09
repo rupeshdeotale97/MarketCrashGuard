@@ -53,6 +53,23 @@ type CryptoBar = {
   fill: string;
 };
 
+function toCryptoBar(name: string, change: number): CryptoBar {
+  return {
+    name,
+    change,
+    fill: change < 0 ? "hsl(var(--risk-crash))" : "hsl(var(--risk-low))",
+  };
+}
+
+function buildPulseCryptoBars(pulse: MarketPulse | null): CryptoBar[] {
+  if (!pulse) return [];
+
+  return [
+    toCryptoBar("BTC", pulse.crypto?.btcusd?.change1d || 0),
+    toCryptoBar("ETH", pulse.crypto?.ethusd?.change1d || 0),
+  ];
+}
+
 export default function ChecklistPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [fetching, setFetching] = useState(false);
@@ -68,10 +85,7 @@ export default function ChecklistPage() {
       if (!mounted) return;
       setFetching(true);
       try {
-        const [pulseResponse, cryptoResponse] = await Promise.all([
-          fetch("/api/market-pulse", { cache: "no-store" }),
-          fetch("https://api.coincap.io/v2/assets?limit=8", { signal: AbortSignal.timeout(5000) }),
-        ]);
+        const pulseResponse = await fetch("/api/market-pulse", { cache: "no-store" });
 
         if (!pulseResponse.ok) {
           const pulseJson = await pulseResponse.json().catch(() => ({}));
@@ -81,28 +95,34 @@ export default function ChecklistPage() {
         const pulseJson = (await pulseResponse.json()) as MarketPulse;
         if (mounted) {
           setPulse(pulseJson);
+          setCryptoData(buildPulseCryptoBars(pulseJson));
           setPulseError(null);
         }
 
-        if (cryptoResponse.ok) {
-          const cryptoJson = await cryptoResponse.json();
-          if (mounted && Array.isArray(cryptoJson?.data)) {
-            const bars: CryptoBar[] = cryptoJson.data.map((item: any) => {
-              const change = Number.parseFloat(item?.changePercent24Hr || "0");
-              return {
-                name: item?.symbol || "-",
-                change,
-                fill: change < 0 ? "hsl(var(--risk-crash))" : "hsl(var(--risk-low))",
-              };
-            });
-            setCryptoData(bars);
+        try {
+          const cryptoResponse = await fetch("https://api.coincap.io/v2/assets?limit=8", {
+            signal: AbortSignal.timeout(5000),
+          });
+
+          if (cryptoResponse.ok) {
+            const cryptoJson = await cryptoResponse.json();
+            if (mounted && Array.isArray(cryptoJson?.data)) {
+              const bars: CryptoBar[] = cryptoJson.data.map((item: any) => {
+                const change = Number.parseFloat(item?.changePercent24Hr || "0");
+                return toCryptoBar(item?.symbol || "-", change);
+              });
+              setCryptoData(bars);
+            }
           }
-        } else if (mounted) {
-          setCryptoData([]);
+        } catch {
+          if (mounted) {
+            setCryptoData(buildPulseCryptoBars(pulseJson));
+          }
         }
       } catch (error: any) {
         if (mounted) {
           setPulseError(error?.message || "Unable to load realtime data.");
+          setCryptoData([]);
         }
       } finally {
         if (mounted) setFetching(false);
