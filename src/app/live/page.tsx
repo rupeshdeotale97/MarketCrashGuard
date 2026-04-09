@@ -14,6 +14,9 @@ import {
   Layers,
   ArrowRight,
   Gauge,
+  Newspaper,
+  ExternalLink,
+  Clock3,
 } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -47,6 +50,19 @@ type MarketPulse = {
     ethusd: MarketStat;
   };
   warnings?: string[];
+};
+
+type MarketNewsItem = {
+  id: string;
+  title: string;
+  link: string;
+  source: string;
+  publishedAt: string;
+  summary: string;
+  region: "Global" | "India";
+  sentiment: "POSITIVE" | "NEGATIVE" | "NEUTRAL";
+  impact: "HIGH" | "MEDIUM" | "LOW";
+  catalysts: string[];
 };
 
 interface IndexData {
@@ -174,12 +190,15 @@ function toLiveRows(pulse: MarketPulse): IndexData[] {
 
 export default function LiveSignalsPage() {
   const [data, setData] = useState<IndexData[]>([]);
+  const [news, setNews] = useState<MarketNewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>("");
+  const [newsUpdated, setNewsUpdated] = useState<string>("");
   const [asOf, setAsOf] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [newsWarnings, setNewsWarnings] = useState<string[]>([]);
   const hasLoadedRef = useRef(false);
 
   useEffect(() => {
@@ -192,7 +211,10 @@ export default function LiveSignalsPage() {
       else setRefreshing(true);
 
       try {
-        const response = await fetch("/api/market-pulse", { cache: "no-store" });
+        const [response, newsResponse] = await Promise.all([
+          fetch("/api/market-pulse", { cache: "no-store" }),
+          fetch("/api/market-impact", { cache: "no-store" }).catch(() => null),
+        ]);
         const json = (await response.json()) as MarketPulse & { error?: string };
 
         if (!response.ok) {
@@ -209,6 +231,19 @@ export default function LiveSignalsPage() {
           setAsOf(json.asOf || "");
           setLastUpdated(new Date().toLocaleTimeString());
           setWarnings(Array.isArray(json.warnings) ? json.warnings : []);
+          if (newsResponse?.ok) {
+            const newsJson = (await newsResponse.json()) as {
+              items?: MarketNewsItem[];
+              warnings?: string[];
+            };
+            setNews(Array.isArray(newsJson.items) ? newsJson.items : []);
+            setNewsWarnings(Array.isArray(newsJson.warnings) ? newsJson.warnings : []);
+            setNewsUpdated(new Date().toLocaleTimeString());
+          } else {
+            setNews([]);
+            setNewsWarnings([]);
+            setNewsUpdated("");
+          }
           setError(null);
           hasLoadedRef.current = true;
         }
@@ -218,8 +253,11 @@ export default function LiveSignalsPage() {
           if (!hasLoadedRef.current) {
             setData([]);
             setWarnings([]);
+            setNews([]);
+            setNewsWarnings([]);
             setAsOf("");
             setLastUpdated("");
+            setNewsUpdated("");
           }
         }
       } finally {
@@ -260,6 +298,46 @@ export default function LiveSignalsPage() {
           </Badge>
         );
     }
+  };
+
+  const getImpactBadge = (impact: MarketNewsItem["impact"]) => {
+    if (impact === "HIGH") {
+      return <Badge className="bg-risk-crash text-white border-transparent">High Impact</Badge>;
+    }
+    if (impact === "MEDIUM") {
+      return <Badge className="bg-risk-elevated/15 text-risk-elevated border-risk-elevated/30 hover:bg-risk-elevated/15">Medium</Badge>;
+    }
+    return (
+      <Badge variant="outline" className="border-white/10 text-muted-foreground">
+        Low
+      </Badge>
+    );
+  };
+
+  const getSentimentBadge = (sentiment: MarketNewsItem["sentiment"]) => {
+    if (sentiment === "POSITIVE") {
+      return <Badge className="bg-risk-low/20 text-risk-low border-risk-low/30 hover:bg-risk-low/20">Positive</Badge>;
+    }
+    if (sentiment === "NEGATIVE") {
+      return <Badge className="bg-risk-crash/10 text-risk-crash border-risk-crash/30 hover:bg-risk-crash/10">Negative</Badge>;
+    }
+    return (
+      <Badge variant="outline" className="border-white/10 text-muted-foreground">
+        Neutral
+      </Badge>
+    );
+  };
+
+  const formatPublishedAt = (value: string) => {
+    if (!value) return "Unknown time";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Unknown time";
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
   };
 
   if (loading) {
@@ -460,6 +538,75 @@ export default function LiveSignalsPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="bg-card rounded-[2.5rem] border border-border p-8 shadow-2xl space-y-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Newspaper className="w-4 h-4 text-secondary" />
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Market-Moving Headlines</h3>
+            </div>
+            <p className="text-xl font-black text-white">News and media catalysts influencing the tape</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Headline Refresh</p>
+            <p className="text-xs font-mono font-bold text-white">{newsUpdated || "-"}</p>
+          </div>
+        </div>
+
+        {newsWarnings.length > 0 && (
+          <div className="rounded-2xl border border-risk-elevated/30 bg-risk-elevated/10 px-4 py-3 text-xs text-risk-elevated">
+            {newsWarnings.join(" ")}
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {news.length > 0 ? (
+            news.map((item) => (
+              <a
+                key={item.id}
+                href={item.link}
+                target="_blank"
+                rel="noreferrer"
+                className="block rounded-[1.75rem] border border-border bg-background/30 p-5 transition-all hover:border-secondary/30"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {getImpactBadge(item.impact)}
+                      {getSentimentBadge(item.sentiment)}
+                      <Badge variant="outline" className="border-white/10 text-muted-foreground">
+                        {item.region}
+                      </Badge>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-white leading-snug">{item.title}</h4>
+                      <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{item.summary || "Market-relevant headline from monitored media feeds."}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      <span>{item.source}</span>
+                      <span className="flex items-center gap-1">
+                        <Clock3 className="w-3 h-3" />
+                        {formatPublishedAt(item.publishedAt)}
+                      </span>
+                      {item.catalysts.slice(0, 3).map((catalyst) => (
+                        <span key={`${item.id}-${catalyst}`} className="rounded-full border border-white/10 px-2 py-1">
+                          {catalyst}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <ExternalLink className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                </div>
+              </a>
+            ))
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border bg-background/20 px-5 py-8 text-center text-xs text-muted-foreground">
+              No market-impact headlines are available right now.
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="bg-muted/10 border border-border/60 rounded-[2.5rem] p-8 space-y-6 mt-6">
